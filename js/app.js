@@ -703,9 +703,29 @@ function buildTimeline() {
   var band = d3.select("#eraBand");
   band.selectAll("div").data(D.eras).enter().append("div").attr("class", "eband")
     .style("width", function (e) { return (xOf(e.to) - xOf(e.from)) * 100 + "%"; })
-    .text(function (e) { return e.name; })
     .attr("title", function (e) { return e.name + " · " + e.from + "–" + e.to; })
     .on("click", function (ev, e) { seek(e.from + 0.01, true); });
+
+  // Era names in a staggered label layer above the band, so every name is fully
+  // visible even over a 3-year era. Labels are centered on their era (clamped to
+  // the viewport) and pushed to a lower row when they would collide.
+  var tw = W - 44; // #bottom has 22px side padding
+  var lwrap = d3.select("#eraLabels");
+  var rowsOcc = [];
+  D.eras.forEach(function (e) {
+    var cx = ((xOf(e.from) + xOf(e.to)) / 2) * tw;
+    var w = e.name.length * 6.2 + 10, half = w / 2;
+    var x = Math.max(half, Math.min(tw - half, cx));
+    var r = 0;
+    while (rowsOcc[r] && rowsOcc[r].some(function (b) { return x - half < b.x1 && x + half > b.x0; })) r++;
+    (rowsOcc[r] = rowsOcc[r] || []).push({ x0: x - half - 4, x1: x + half + 4 });
+    lwrap.append("div").attr("class", "elab").datum(e)
+      .style("left", x + "px").style("top", (r * 12) + "px")
+      .attr("title", e.from + "–" + e.to + " · " + e.title)
+      .text(e.name)
+      .on("click", function (ev, d) { seek(d.from + 0.01, true); });
+  });
+  lwrap.style("height", (rowsOcc.length * 12 + 2) + "px");
 
   d3.select("#eventDots").selectAll("div").data(D.events).enter().append("div")
     .attr("class", "evdot")
@@ -739,6 +759,7 @@ function updateTimeline(y) {
   d3.select("#thumb").style("left", u + "%");
   d3.select("#trackFill").style("width", u + "%");
   d3.selectAll(".eband").classed("on", function (e) { return y >= e.from && y < e.to; });
+  d3.selectAll(".elab").classed("on", function (e) { return y >= e.from && y < e.to; });
   d3.selectAll(".evdot").classed("past", function (e) { return e.year <= y; })
     .classed("future", function (e) { return e.year > y; });
 }
