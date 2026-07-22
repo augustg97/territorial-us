@@ -524,6 +524,51 @@ T.push({
   ]
 });
 
+T.push({
+  id: "philippines1898", kind: "acquisition", from: 1898, to: 1946, name: "The Philippines", color: "#977fae",
+  insetOnly: true, label: null,
+  tag: "Ceded by Spain 1898 · independent July 4, 1946",
+  facts: [
+    ["Ceded", "Treaty of Paris, December 10, 1898 — with a $20 million payment to Spain"],
+    ["War", "Philippine–American War, 1899–1902 (resistance continued for years after)"],
+    ["Area", "≈115,600 sq mi — much the largest U.S. overseas possession"],
+    ["Path", "Jones Act 1916 → Commonwealth 1935 → independence July 4, 1946"]
+  ],
+  eras: [
+    { from: 1898, to: 1935, text: "Having fought Spain alongside Filipino revolutionaries, the U.S. buys the archipelago and refuses its declared republic. The Philippine–American War follows: about 4,200 American dead, tens of thousands of Filipino soldiers, and civilian deaths — from fighting, famine, reconcentration and cholera — in the hundreds of thousands. 'Benevolent assimilation' brings English-language schools and roads under an American governor; the Jones Act of 1916 promises eventual independence." },
+    { from: 1935, to: 1946, text: "The Tydings-McDuffie Act (1934) starts a ten-year clock: the Commonwealth of the Philippines inaugurates Manuel Quezon in 1935. Japan invades hours after Pearl Harbor; Bataan and Corregidor fall in 1942, and the death march and occupation follow. MacArthur returns at Leyte (October 1944); the Battle of Manila (February 1945) kills roughly 100,000 civilians and levels the capital. On July 4, 1946, the U.S. flag comes down — independence arrives amid ruins, tied to the Bell Trade Act's strings." },
+    { from: 1946, to: 2026, text: "The republic and its former ruler stay entangled: a mutual-defense treaty (1951), vast bases at Clark and Subic until 1992, renewed base access after 2014, and one of America's largest immigrant communities — over four million Filipino Americans. The war that opened the American century in Asia remains, in both countries, its least-remembered chapter." }
+  ],
+  sources: [
+    "National Archives — Treaty of Paris (1898)",
+    "Library of Congress — The World of 1898: The Spanish-American War",
+    "Philippine Statistics Authority"
+  ]
+});
+
+T.push({
+  id: "canalzone1903", kind: "acquisition", from: 1903, to: 1979, name: "Panama Canal Zone", color: "#977fae",
+  insetOnly: true, label: null,
+  tag: "Hay–Bunau-Varilla Treaty · 1903–1979",
+  facts: [
+    ["Treaty", "November 18, 1903 — $10 million plus $250,000 a year"],
+    ["Grant", "A ten-mile-wide zone 'in perpetuity,' signed by no Panamanian"],
+    ["Canal opened", "August 15, 1914"],
+    ["End", "Zone dissolved October 1, 1979; canal fully transferred December 31, 1999"]
+  ],
+  eras: [
+    { from: 1903, to: 1914, text: "When Colombia balks at the canal treaty, Panama secedes with U.S. warships offshore; the new republic's French agent signs away a ten-mile zone within two weeks. Construction (1904–14) succeeds where France failed — Gorgas defeats yellow fever, Gaillard cuts the continental divide — at the cost of some 5,600 more lives, most of them Afro-Caribbean laborers on the segregated 'silver roll.'" },
+    { from: 1914, to: 1964, text: "The Zone becomes a fenced company state — commissaries, clubhouses and Jim Crow-style silver-and-gold pay lines — astride the hemisphere's strategic chokepoint, guarded by forts and, in World War II, over 60,000 troops. Panamanian resentment of the enclave builds for decades." },
+    { from: 1964, to: 1979, text: "In January 1964, riots over the flying of Panama's flag leave 21 Panamanians and 4 U.S. soldiers dead and break diplomatic relations — 'Martyrs' Day' starts the road to renegotiation. The Torrijos–Carter treaties (1977) narrowly clear the Senate; on October 1, 1979 the Canal Zone ceases to exist." },
+    { from: 1979, to: 2026, text: "A joint commission runs the waterway until noon, December 31, 1999, when Panama assumes full control — interrupted by the 1989 U.S. invasion to depose Noriega. Panama's expanded locks (2016) now pass ships three times the old maximum; the canal remains the U.S. economy's Pacific-Atlantic hinge, under another flag." }
+  ],
+  sources: [
+    "National Archives",
+    "Library of Congress — Panama Canal collections",
+    "Panama Canal Authority (ACP)"
+  ]
+});
+
 // Small insular territories (cards only; drawn from topology where visible)
 T.push({
   id: "guam1898", kind: "acquisition", from: 1898, to: null, name: "Guam", color: "#977fae",

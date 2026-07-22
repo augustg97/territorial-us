@@ -45,8 +45,9 @@
 <div class="panel" id="viewPanel">
   <div class="grp-h">SHADING</div>
   <div class="seg" id="shadeSeg">
-    <button data-mode="acq" class="on">Acquisitions</button>
-    <button data-mode="union">One union</button>
+    <button data-mode="geo" class="on">Geographic</button>
+    <button data-mode="acq">Acquisitions</button>
+    <button data-mode="union">Union</button>
   </div>
   <div class="grp-h">MAP LAYERS</div>
   <label class="tog"><span>Political boundaries</span><input type="checkbox" id="tgBorders" checked><i></i></label>
@@ -59,6 +60,24 @@
   <div class="grp-h">CAMERA</div>
   <label class="tog"><span>Follow the story</span><input type="checkbox" id="tgAutoCam" checked><i></i></label>
   <button id="recenterBtn" class="mini hidden">⌖ recenter</button>
+</div>
+
+<!-- ======================= territories & insets ======================= -->
+<div class="panel hidden" id="terrPanel">
+  <div class="panel-h" id="terrHead">TERRITORIES &amp; POSSESSIONS</div>
+  <div id="terrBtns"></div>
+</div>
+
+<div class="panel hidden" id="inset">
+  <div id="insetHead">
+    <div>
+      <div class="eyebrow" id="insetEyebrow">TERRITORY</div>
+      <h2 id="insetTitle">—</h2>
+    </div>
+    <div class="ax" id="insetClose">×</div>
+  </div>
+  <div id="insetStage"></div>
+  <div id="insetFoot">Click the territory or a city for its story</div>
 </div>
 
 <!-- ======================= info card ======================= -->
@@ -125,7 +144,8 @@
     <ul>
       <li>Territorial <b>organization</b> (e.g. the many shapes of Missouri or Dakota Territory) is summarized in cards, not drawn year-by-year.</li>
       <li>Colonial-era claims are stylized; the Maine and Oregon boundary disputes resolve at their treaty dates (1842, 1846).</li>
-      <li>The Philippines (1898–1946) and Panama Canal Zone (1903–79) are covered in cards and events but lie outside the map frame.</li>
+      <li>Overseas territories — the Philippines (1898–1946), Panama Canal Zone (1903–79), Puerto Rico, Guam, American Samoa, the U.S. Virgin Islands, the Northern Marianas and Hawaiʻi — open as satellite inset views from the buttons beside the acquisitions legend; the story camera visits each as it joins.</li>
+      <li>The satellite base is NASA's Blue Marble (July 2004 composite): modern imagery standing in for the past. Vegetation is shown slightly richer in early years as an impression of pre-industrial land cover — not a reconstruction. A few modern features (reservoirs, irrigated fields) predate their existence on screen; the Salton Sea is masked before it formed in 1905.</li>
       <li>City populations are city-proper census figures; national population interpolates between censuses.</li>
     </ul>
     <h3>PRIMARY SOURCES</h3>
@@ -135,7 +155,9 @@
     <i>Area of the United States</i> (1912); Library of Congress; National Park Service;
     U.S. Geological Survey; state archives and historical societies as cited on each card.</p>
     <h3>BUILT WITH</h3>
-    <p>D3.js and TopoJSON · Census/us-atlas and Natural Earth geometry · no other dependencies.
+    <p>D3.js and TopoJSON · Census/us-atlas and Natural Earth geometry · satellite imagery:
+    NASA Earth Observatory <b>Blue Marble Next Generation</b> (Reto Stöckli, NASA GSFC), public domain,
+    reprojected to this map's equal-area conic · no other dependencies.
     Keyboard: <b>space</b> play · <b>←/→</b> step year · <b>shift+←/→</b> jump events.</p>
   </div>
 </div>
@@ -148,6 +170,8 @@
 <script src="data/geo/countries.js"></script>
 <script src="data/geo/rivers.js"></script>
 <script src="data/geo/lakes.js"></script>
+<script src="data/geo/ph.js"></script>
+<script src="data/insets.js"></script>
 <script src="data/meta.js"></script>
 <script src="data/territories.js"></script>
 <script src="data/eras.js"></script>

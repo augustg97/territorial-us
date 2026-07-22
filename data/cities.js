@@ -488,5 +488,13 @@ TUSDATA.cities=[
   {from:1898,to:1952,text:"Under US military then civilian rule; the 1917 Jones Act imposed citizenship as the university grew at Rio Piedras. Nationalist ferment climaxed in the 1950 revolt, including an attack on La Fortaleza. In 1952 the Commonwealth constitution made San Juan capital of the Estado Libre Asociado, amid Operation Bootstrap's rush of industrialization."},
   {from:1952,to:2026,text:"Bootstrap factories, then pharmaceuticals and tourism, urbanized the metro while Old San Juan's blue-cobbled core was restored. Debt crisis brought the federal PROMESA board in 2016; Hurricane Maria, September 20, 2017, caused months-long blackouts and thousands of excess deaths island-wide. Mass protests in San Juan's streets forced the governor's resignation in 2019. The municipio counted 342,259 people in 2020."}
  ],
- sources:["U.S. Census Bureau, decennial census","National Park Service — San Juan National Historic Site","Library of Congress"]}
+ sources:["U.S. Census Bureau, decennial census","National Park Service — San Juan National Historic Site","Library of Congress"]},
+{id:"manila",name:"Manila",lon:120.98,lat:14.60,founded:1571,appears:1898,joins:1898,leaves:1946,tier:1,
+ facts:[["Founded","1571, Spanish capital of the Philippines (Maynilà)"],["Role","Colonial capital under Spain, then the United States, 1898–1946"],["Note","Intramuros, the walled city, was the seat of 350 years of colonial rule"]],
+ pop:[[1903,219928],[1939,623492],[1960,1138611],[1990,1601234],[2020,1846513]],
+ eras:[
+  {from:1898,to:1946,text:"Dewey destroys the Spanish squadron in Manila Bay in May 1898; within a year American troops and the Philippine Republic are at war outside the walls. As capital of the U.S. insular government, Manila gains English-language schools, Burnham-planned boulevards and port works — the 'Pearl of the Orient' — until Japanese occupation (1942) and the 1945 battle that kills roughly 100,000 civilians and destroys the old city."},
+  {from:1946,to:2026,text:"Capital of the independent republic (with an interlude when Quezon City held the title, 1948–1976), Manila rebuilds and swells into one of the world's densest megacities — over 13 million people in the metropolitan region. Jeepneys descended from U.S. Army surplus, a large English-speaking workforce, and deep family ties to America carry the colonial half-century forward."}
+ ],
+ sources:["Philippine Statistics Authority, census of population","Library of Congress — The World of 1898","National Historical Commission of the Philippines"]},
 ];

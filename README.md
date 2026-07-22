@@ -27,6 +27,8 @@ to that port.
 
 | Layer | Contents |
 |---|---|
+| Satellite base | NASA Blue Marble Next Generation (July 2004), reprojected offline into the map's equal-area conic; the U.S. renders at full brightness with Canada and Mexico veiled darker. Geographic mode (default) shows near-pure terrain; Acquisitions and Union modes tint it. |
+| Overseas territories | The Philippines (1898–1946), Panama Canal Zone (1903–79), Puerto Rico & USVI, Guam & N. Marianas, American Samoa and Hawaiʻi open as satellite inset views — the story camera visits each as it joins, and buttons beside the acquisitions legend reopen them anytime. |
 | Acquisitions | Original 1783 territory, Louisiana Purchase, 1818 Red River basin, West Florida, Adams-Onís Florida, Texas, Oregon, Mexican Cession, Gadsden, Alaska, Hawaiʻi, Puerto Rico + insular territories — hand-traced along their treaty lines (rivers, parallels, meridians) |
 | Foreign claims & context | New France, New Spain/Mexico, Spanish Luisiana, British colonies & Indian Reserve (Proclamation of 1763), the Floridas, Rupert's Land, Russian America, Kingdom & Republic of Hawaiʻi, Republic of Texas, British North America → Canada |
 | States | All 50 + DC appear at admission (colonies render from 1750; Vermont as a republic 1777–91; Massachusetts+Maine, Virginia+WV/KY, NC+TN merge correctly before their splits) |
@@ -90,3 +92,6 @@ visible in each file; `eras` must be contiguous and end at 2026.
   Territory region, and nearly every state and feature card.
 
 Built with D3.js + TopoJSON. Geometry: U.S. Census Bureau via us-atlas; Natural Earth.
+Satellite imagery: NASA Earth Observatory Blue Marble Next Generation (public domain),
+reprojected with `scratchpad` tooling into the app's fixed conic reference frame —
+the projection constants in `js/app.js` and `data/img/basemap.jpg` are a matched pair.

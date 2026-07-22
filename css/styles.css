@@ -72,7 +72,7 @@ button{font-family:inherit;color:inherit;background:none;border:none;cursor:poin
 .grp-h{font-size:10px;letter-spacing:.16em;color:var(--dim2);font-weight:600;margin:10px 0 7px}
 .grp-h:first-child{margin-top:0}
 .seg{display:flex;background:rgba(255,255,255,.06);border-radius:9px;padding:3px;gap:3px}
-.seg button{flex:1;font-size:11px;padding:5px 4px;border-radius:7px;color:var(--dim)}
+.seg button{flex:1;font-size:10px;padding:5px 2px;border-radius:7px;color:var(--dim);letter-spacing:.01em}
 .seg button.on{background:rgba(217,164,65,.18);color:var(--ink)}
 .tog{display:flex;justify-content:space-between;align-items:center;padding:4.5px 0;cursor:pointer;font-size:11.5px;color:var(--dim)}
 .tog:hover{color:var(--ink)}
@@ -156,17 +156,19 @@ button{font-family:inherit;color:inherit;background:none;border:none;cursor:poin
 #about li::before{content:"";position:absolute;left:0;top:7px;width:4px;height:4px;border-radius:50%;background:var(--accent)}
 
 /* ---------- svg map styles ---------- */
-.graticule{fill:none;stroke:#ffffff;stroke-opacity:.035;stroke-width:.6}
-.ctry{fill:var(--land);stroke:var(--landline);stroke-width:.7}
-.nationBase{fill:#131920}
+.graticule{fill:none;stroke:#cfe0f2;stroke-opacity:.05;stroke-width:.6}
+.ctry{fill:none;stroke:rgba(190,210,235,.16);stroke-width:.7}
+.coast{fill:none;stroke:rgba(210,230,255,.20);stroke-width:.6}
+.veil{pointer-events:none}
+.nationBase{fill:none}
 .acq{stroke:rgba(255,255,255,.14);stroke-width:.5;transition:opacity .5s}
 .acq.dim{opacity:.5}
 .foreignT{stroke:rgba(255,255,255,.1);stroke-width:.6;transition:opacity .5s}
-.lake{fill:#0d1420;stroke:#26313f;stroke-width:.5}
-.river{fill:none;stroke:#2a3a4e;stroke-linecap:round;stroke-linejoin:round}
+.lake{fill:rgba(9,20,36,.42);stroke:rgba(130,170,215,.30);stroke-width:.5}
+.river{fill:none;stroke:rgba(130,175,225,.42);stroke-linecap:round;stroke-linejoin:round}
 .stateFill{fill:#fff;fill-opacity:0;cursor:pointer}
 .stateFill:hover{fill-opacity:.06}
-.stateLine{fill:none;stroke:#dbe4ee;stroke-opacity:.34;stroke-width:.6}
+.stateLine{fill:none;stroke:#e6edf6;stroke-opacity:.52;stroke-width:.6}
 .stateLine.colony{stroke-dasharray:3 2.4;stroke-opacity:.42}
 .stateLine.republicVT{stroke:#c9b458;stroke-opacity:.7;stroke-dasharray:4 2}
 .regionShape{stroke-width:1;cursor:pointer}
@@ -207,3 +209,30 @@ button{font-family:inherit;color:inherit;background:none;border:none;cursor:poin
   #readout #statsBlock{display:none}
   #info{width:calc(100vw - 32px);right:16px}
 }
+
+/* ---------- territories & insets ---------- */
+#terrPanel{position:fixed;left:262px;bottom:170px;z-index:22;width:auto;max-width:300px;padding:10px 12px}
+#terrPanel .panel-h{cursor:default}
+#terrBtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-width:280px}
+.tbtn{font-size:10.5px;color:var(--dim);border:1px solid var(--line);border-radius:14px;padding:4px 10px;cursor:pointer;transition:.15s;white-space:nowrap;background:rgba(255,255,255,.03)}
+.tbtn:hover{color:var(--ink);border-color:rgba(217,164,65,.55)}
+.tbtn.open{color:var(--accent);border-color:rgba(217,164,65,.7);background:rgba(217,164,65,.10)}
+.tbtn.past{opacity:.55}
+.tbtn .ty{color:var(--dim2);margin-left:4px;font-variant-numeric:tabular-nums}
+#inset{position:fixed;left:262px;bottom:238px;z-index:34;padding:12px 14px 10px;max-width:calc(100vw - 560px)}
+#insetHead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:8px}
+#insetTitle{font-size:15px;font-weight:600;letter-spacing:.02em;margin-top:3px}
+#insetHead .ax{cursor:pointer;color:var(--dim2);font-size:18px;line-height:1}
+#insetHead .ax:hover{color:var(--ink)}
+#insetStage{position:relative;border-radius:9px;overflow:hidden;border:1px solid rgba(255,255,255,.14)}
+#insetStage svg{display:block}
+#insetFoot{font-size:9.5px;color:var(--dim2);margin-top:7px;letter-spacing:.05em}
+.insetTerr{cursor:pointer;transition:fill-opacity .3s}
+.insetTerr.us{fill:#d9a441;fill-opacity:.20;stroke:#ffd77a;stroke-opacity:.85;stroke-width:1.2}
+.insetTerr.notyet{fill:#8a94a3;fill-opacity:.10;stroke:#aab4c3;stroke-opacity:.5;stroke-width:.8;stroke-dasharray:3 2}
+.insetTerr.former{fill:#6f9e8a;fill-opacity:.08;stroke:#8fc2a0;stroke-opacity:.6;stroke-width:.9;stroke-dasharray:4 2.6}
+.insetTerr:hover{fill-opacity:.32}
+.insetCtx{fill:none;stroke:rgba(255,255,255,.30);stroke-width:.8}
+.insetStatus{font-size:10px;color:var(--dim);letter-spacing:.04em;margin-top:2px}
+.insetStatus b{color:var(--accent);font-weight:600}
+@media (max-width:1080px){#terrPanel{left:16px}#inset{left:16px;max-width:calc(100vw - 60px)}}

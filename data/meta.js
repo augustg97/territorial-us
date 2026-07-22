@@ -112,7 +112,13 @@ TUSDATA.areaLedger = [
   [1848, 529017, "Mexican Cession"],
   [1853, 29640, "Gadsden Purchase"],
   [1867, 590884, "Alaska"],
-  [1898, 6449, "Hawaii"]
+  [1898, 6449, "Hawaii"],
+  [1898, 3435, "Puerto Rico"],
+  [1898, 210, "Guam"],
+  [1898, 115600, "Philippines (until 1946)"],
+  [1900, 76, "American Samoa"],
+  [1917, 133, "U.S. Virgin Islands"],
+  [1946, -115600, "Philippine independence"]
 ];
 
 // Heads of state / government relevant to the map, by (decimal) year.
