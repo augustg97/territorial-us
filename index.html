@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Territorial United States — 1750 → Present</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="stage"></div>
+
+<!-- ======================= top bar ======================= -->
+<div id="topbar">
+  <div id="title">
+    <h1>TERRITORIAL UNITED STATES <span id="aboutBtn" title="About this model">ⓘ</span></h1>
+    <div class="sub">Continental expansion &amp; transformation · 1750 → present</div>
+  </div>
+  <div id="readout">
+    <div id="yearBig">1750</div>
+    <div id="eraName">Colonial Rivalries</div>
+    <div id="statsBlock">
+      <div class="statline"><b>Population</b> <span id="statPop">—</span></div>
+      <div class="statline" id="statEnslavedRow"><b>Enslaved</b> <span id="statEnslaved">—</span></div>
+      <div class="statline"><b>States</b> <span id="statStates">0</span> · <b>Area</b> <span id="statArea">—</span></div>
+      <div class="statline"><b>Sovereign / President</b> <span id="statLeader">—</span></div>
+      <div class="statline"><b>Seat of government</b> <span id="statCapital">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= left rail ======================= -->
+<div id="leftrail">
+  <div class="panel" id="chaptersPanel">
+    <div class="panel-h">CHAPTERS <span class="chev" id="chaptersChev">▾</span></div>
+    <div id="chapterList"></div>
+  </div>
+  <div class="panel" id="legendPanel">
+    <div class="panel-h">ACQUISITIONS <span class="chev" id="legendChev">▾</span></div>
+    <div id="legendList"></div>
+  </div>
+</div>
+
+<!-- ======================= right rail ======================= -->
+<div class="panel" id="viewPanel">
+  <div class="grp-h">SHADING</div>
+  <div class="seg" id="shadeSeg">
+    <button data-mode="acq" class="on">Acquisitions</button>
+    <button data-mode="union">One union</button>
+  </div>
+  <div class="grp-h">MAP LAYERS</div>
+  <label class="tog"><span>Political boundaries</span><input type="checkbox" id="tgBorders" checked><i></i></label>
+  <label class="tog"><span>Political labels</span><input type="checkbox" id="tgPoliLabels" checked><i></i></label>
+  <label class="tog"><span>Geographic labels</span><input type="checkbox" id="tgGeoLabels" checked><i></i></label>
+  <label class="tog"><span>Parks &amp; landmarks</span><input type="checkbox" id="tgParks" checked><i></i></label>
+  <label class="tog"><span>Trails, canals &amp; rails</span><input type="checkbox" id="tgRoutes" checked><i></i></label>
+  <label class="tog"><span>Ecology overlays</span><input type="checkbox" id="tgEco" checked><i></i></label>
+  <label class="tog"><span>Foreign claims &amp; context</span><input type="checkbox" id="tgContext" checked><i></i></label>
+  <div class="grp-h">CAMERA</div>
+  <label class="tog"><span>Follow the story</span><input type="checkbox" id="tgAutoCam" checked><i></i></label>
+  <button id="recenterBtn" class="mini hidden">⌖ recenter</button>
+</div>
+
+<!-- ======================= info card ======================= -->
+<div class="panel hidden" id="info">
+  <div class="ax" id="infoClose">×</div>
+  <div class="eyebrow" id="infoTag">—</div>
+  <h2 id="infoName">—</h2>
+  <div id="infoRows"></div>
+  <div id="infoDesc"></div>
+  <div id="infoEraSpan"></div>
+  <div class="cite" id="infoCite"></div>
+</div>
+
+<!-- ======================= timeline ======================= -->
+<div id="bottom">
+  <div id="eraBand"></div>
+  <div id="track">
+    <div id="trackFill"></div>
+    <div id="eventDots"></div>
+    <div id="thumb"></div>
+    <div id="tickRow"></div>
+  </div>
+  <div id="ctlrow">
+    <button id="playBtn" title="Play / pause (space)"><span id="playIcon">▶</span></button>
+    <button id="stepBack" title="Back one year (←)">‹</button>
+    <button id="stepFwd" title="Forward one year (→)">›</button>
+    <button id="prevEvt" title="Previous event (shift+←)">⇤</button>
+    <button id="nextEvt" title="Next event (shift+→)">⇥</button>
+    <div id="speedwrap"><span class="lab">Speed</span><input type="range" id="speed" min="0" max="5" step="1" value="2"><span id="speedVal">4 yr/s</span></div>
+    <div id="evtReadout"></div>
+  </div>
+</div>
+
+<div id="hint">Drag the timeline · click anything on the map for its story · scroll to zoom</div>
+<div id="tooltip" class="hidden"></div>
+
+<!-- ======================= about ======================= -->
+<div id="aboutWrap" class="hidden">
+  <div id="about">
+    <div class="ax" id="aboutClose">×</div>
+    <h2>Territorial United States</h2>
+    <p>An interactive model of the territory now governed by the United States, from 1750 —
+    when it was Native ground contested by three empires — through the present day.
+    Scrub the timeline to watch sovereignty claims, borders, cities, infrastructure and
+    ecology change; click any state, territory, city, river, park or overlay for a card
+    that rewrites itself for the year you are viewing.</p>
+    <h3>METHOD &amp; GEOMETRY</h3>
+    <p>Modern state and coastline geometry comes from the U.S. Census Bureau cartographic
+    boundary files (via <b>us-atlas</b>); rivers and lakes from <b>Natural Earth</b>.
+    Acquisition boundaries are hand-traced for this visualization along their treaty
+    definitions — the Mississippi, Sabine, Red, Arkansas, Rio Grande and Gila rivers, the
+    31st, 42nd and 49th parallels, the 100th meridian and the Adams-Onís line — and are
+    <b>simplified</b>: they are faithful at continental scale, not surveyor-accurate.
+    Area figures follow the Census Bureau's 1912 acquisition accounting; the modern total
+    (~3.80&nbsp;million sq&nbsp;mi) reflects later remeasurement.</p>
+    <h3>HONESTY OF THE MAP</h3>
+    <p>Every acquisition shown here transferred land between empires on paper; on the
+    ground it was the homeland of sovereign Native nations, taken by treaty, coercion and
+    war. Their boundaries shifted continuously and are under-represented by any polygon —
+    this model carries that history in its cards, chapters and events rather than
+    pretending a single map could hold it.</p>
+    <h3>SIMPLIFICATIONS</h3>
+    <ul>
+      <li>Territorial <b>organization</b> (e.g. the many shapes of Missouri or Dakota Territory) is summarized in cards, not drawn year-by-year.</li>
+      <li>Colonial-era claims are stylized; the Maine and Oregon boundary disputes resolve at their treaty dates (1842, 1846).</li>
+      <li>The Philippines (1898–1946) and Panama Canal Zone (1903–79) are covered in cards and events but lie outside the map frame.</li>
+      <li>City populations are city-proper census figures; national population interpolates between censuses.</li>
+    </ul>
+    <h3>PRIMARY SOURCES</h3>
+    <p>National Archives milestone documents (Treaty of Paris 1783, Louisiana Purchase,
+    Guadalupe Hidalgo, Alaska purchase check, Hawaiʻi annexation resolution); Avalon
+    Project treaty texts (Yale Law School); U.S. Census Bureau decennial censuses and
+    <i>Area of the United States</i> (1912); Library of Congress; National Park Service;
+    U.S. Geological Survey; state archives and historical societies as cited on each card.</p>
+    <h3>BUILT WITH</h3>
+    <p>D3.js and TopoJSON · Census/us-atlas and Natural Earth geometry · no other dependencies.
+    Keyboard: <b>space</b> play · <b>←/→</b> step year · <b>shift+←/→</b> jump events.</p>
+  </div>
+</div>
+
+<!-- vendor -->
+<script src="js/vendor/d3.v7.min.js"></script>
+<script src="js/vendor/topojson-client.min.js"></script>
+<!-- data -->
+<script src="data/geo/states10m.js"></script>
+<script src="data/geo/countries.js"></script>
+<script src="data/geo/rivers.js"></script>
+<script src="data/geo/lakes.js"></script>
+<script src="data/meta.js"></script>
+<script src="data/territories.js"></script>
+<script src="data/eras.js"></script>
+<script src="data/overlays.js"></script>
+<script src="data/cities.js"></script>
+<script src="data/geofeatures.js"></script>
+<script src="data/landmarks.js"></script>
+<script src="data/states_prose_1.js"></script>
+<script src="data/states_prose_2.js"></script>
+<!-- app -->
+<script src="js/app.js"></script>
+</body>
+</html>
