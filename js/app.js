@@ -85,13 +85,12 @@ function absorbedBy(fips, y) {
 var W = window.innerWidth || 1440, H = window.innerHeight || 900;
 if (W < 320) W = 1440;
 if (H < 240) H = 900;
-// FIXED reference-frame projection — constants are baked into the pre-rendered
-// satellite basemap (data/img/basemap.jpg); do not change one without the other.
-var projection = d3.geoConicEqualArea().rotate([98, 0]).parallels([27, 52])
-  .scale(1674.9161138469276).translate([748.5515620291021, 706.7396695551747]);
+// ONE world map: US-centered Equal Earth. FIXED constants — baked into every
+// pre-rendered raster in data/geo/rasters.js; re-render (render_ee.py) if changed.
+var projection = d3.geoEqualEarth().rotate([100, 0])
+  .scale(1731.610258338954).translate([4786.828245295919, 2381.1588677106856]);
 var path = d3.geoPath(projection);
-// basemap.jpg covers this rect of the reference frame at 1.4 px per unit
-var BM = { x: -1600, y: -820, w: 3860, h: 2340, href: "data/img/basemap.jpg" };
+var WORLD_BOUNDS = [100, 100, 9473.656, 4662.318]; // projected sphere bounds
 
 // camera keyframes: [year, [w,s,e,n]]
 var CAMS = [
@@ -151,7 +150,7 @@ var defs = svg.append("defs");
 defs.append("clipPath").attr("id", "clipNation").append("path").attr("d", path(nationF));
 var clipLand = defs.append("clipPath").attr("id", "clipLand");
 clipLand.append("path").attr("d", path(nationF));
-D.countries.features.forEach(function (f) { clipLand.append("path").attr("d", path(f)); });
+clipLand.append("path").attr("d", path(D.world110.land));
 
 // hatch patterns
 function hatch(id, color, gap, w) {
@@ -173,56 +172,42 @@ hatch("hatchDust", "rgba(190,140,70,.55)", 5, 1);
 
 var gWorld = svg.append("g");
 
-// --- satellite base: full image, dark veil, land restored dimmer, U.S. bright ---
+// --- satellite base: world raster stack; dark veil; land dimmer; U.S. bright ---
 var gBase = gWorld.append("g");
-function bmImage() {
-  return gBase.append("image").attr("href", BM.href)
-    .attr("x", BM.x).attr("y", BM.y).attr("width", BM.w).attr("height", BM.h)
-    .attr("preserveAspectRatio", "none");
+function rasterStack(parent) {
+  var g = parent.append("g");
+  (D.rasters || []).forEach(function (r) {
+    g.append("image").attr("href", r.href).attr("x", r.x).attr("y", r.y)
+      .attr("width", r.w).attr("height", r.h).attr("preserveAspectRatio", "none");
+  });
+  return g;
 }
-bmImage();                                                              // ocean + everything
-gBase.append("rect").attr("class", "veil").attr("x", BM.x).attr("y", BM.y)
-  .attr("width", BM.w).attr("height", BM.h).attr("fill", "#060a10").attr("opacity", 0.55);
-bmImage().attr("clip-path", "url(#clipLand)");                          // all land, restored
-gBase.append("rect").attr("class", "veil").attr("x", BM.x).attr("y", BM.y)
-  .attr("width", BM.w).attr("height", BM.h).attr("fill", "#060a10").attr("opacity", 0.34)
-  .attr("clip-path", "url(#clipLand)");                                 // land dimmed…
-bmImage().attr("clip-path", "url(#clipNation)");                        // …except the U.S.
+function veilRect(parent) {
+  return parent.append("rect").attr("x", WORLD_BOUNDS[0]).attr("y", WORLD_BOUNDS[1])
+    .attr("width", WORLD_BOUNDS[2] - WORLD_BOUNDS[0]).attr("height", WORLD_BOUNDS[3] - WORLD_BOUNDS[1])
+    .attr("fill", "#060a10").attr("class", "veil");
+}
+rasterStack(gBase);                                          // everything
+veilRect(gBase).attr("opacity", 0.52);                       // ocean + all
+rasterStack(gBase).attr("clip-path", "url(#clipLand)");      // land restored…
+veilRect(gBase).attr("opacity", 0.33).attr("clip-path", "url(#clipLand)"); // …then dimmed…
+rasterStack(gBase).attr("clip-path", "url(#clipNation)");    // …except the U.S.
 
-// --- world frame: the whole Earth, US-centered, far east of the main stage ---
-var WF = { x0: 4200, y0: -160, w: 2880, h: 1440, img: "data/img/world.jpg" };
-var worldProj = d3.geoEquirectangular().rotate([100, 0])
-  .scale(WF.w / (2 * Math.PI)).translate([WF.x0 + WF.w / 2, WF.y0 + WF.h / 2]);
-var wpath = d3.geoPath(worldProj);
-function wpt(p) { return worldProj(p); }
-defs.append("clipPath").attr("id", "clipWorldLand").append("path").attr("d", wpath(D.world110.land));
-defs.append("clipPath").attr("id", "clipWorldNation").append("path").attr("d", wpath(nationF));
-var gWF = gWorld.append("g");
-function wfImage() {
-  return gWF.append("image").attr("href", WF.img).attr("x", WF.x0).attr("y", WF.y0)
-    .attr("width", WF.w).attr("height", WF.h).attr("preserveAspectRatio", "none");
-}
-wfImage();
-gWF.append("rect").attr("x", WF.x0).attr("y", WF.y0).attr("width", WF.w).attr("height", WF.h)
-  .attr("fill", "#060a10").attr("opacity", 0.5);
-wfImage().attr("clip-path", "url(#clipWorldLand)");
-gWF.append("rect").attr("x", WF.x0).attr("y", WF.y0).attr("width", WF.w).attr("height", WF.h)
-  .attr("fill", "#060a10").attr("opacity", 0.32).attr("clip-path", "url(#clipWorldLand)");
-wfImage().attr("clip-path", "url(#clipWorldNation)");
-// hi-res satellite patches at each territory's true location
-D.insets.forEach(function (c) {
-  var tl = wpt([c.bbox[0], c.bbox[3]]), br = wpt([c.bbox[2], c.bbox[1]]);
-  gWF.append("image").attr("href", c.img).attr("x", tl[0]).attr("y", tl[1])
-    .attr("width", br[0] - tl[0]).attr("height", br[1] - tl[1]).attr("preserveAspectRatio", "none");
-});
-gWF.append("path").attr("class", "wctry").attr("d", wpath(D.world110.countries));
-gWF.append("path").attr("class", "wcoastUS").attr("d", wpath(nationF));
+// rest-of-world political context on the same map (110m outside the 50m NA set)
+var NA50 = {};
+D.countries.features.forEach(function (f) { NA50[f.properties.name] = 1; });
+var world110Rest = { type: "FeatureCollection",
+  features: D.world110.countries.features.filter(function (f) { return !NA50[f.properties.name]; }) };
+gBase.append("path").attr("class", "wctry").attr("d", path(world110Rest));
+
+// overseas territory geometries at their true places
 var wTerrEls = [];
+var gOverseas = gWorld.append("g");
 D.insets.forEach(function (c) {
   c.feats.forEach(function (f) {
     var geo = f.geoRef ? stateByFips[f.geoRef] : D[f.geoKey];
     if (!geo) return;
-    var el = gWF.append("path").datum(f).attr("class", "wterr notyet").attr("d", wpath(geo))
+    var el = gOverseas.append("path").datum(f).attr("class", "wterr notyet").attr("d", path(geo))
       .on("click", function (ev, ff) {
         ev.stopPropagation();
         var t = D.territories.find(function (tt) { return tt.id === ff.cardId; });
@@ -233,6 +218,7 @@ D.insets.forEach(function (c) {
     wTerrEls.push({ f: f, el: el });
   });
 });
+
 // trade arcs & treaty lines
 function greatArc(a, b) {
   var interp = d3.geoInterpolate(a, b), pts = [];
@@ -240,12 +226,12 @@ function greatArc(a, b) {
   return { type: "LineString", coordinates: pts };
 }
 var TRADE_COLORS = { "export": "#a8cc7f", "import": "#d4b08a", "both": "#9fc0d8" };
-var gTreaty = gWF.append("g");
-var gTrade = gWF.append("g");
+var gTreaty = gWorld.append("g");
+var gTrade = gWorld.append("g");
 var DCPT = [-77.03, 38.9];
 var tradeEls = gTrade.selectAll("g").data(D.trade).enter().append("g");
 tradeEls.each(function (t) {
-  var g = d3.select(this), dd = wpath(greatArc(t.us, t.world));
+  var g = d3.select(this), dd = path(greatArc(t.us, t.world));
   g.append("path").attr("class", "tradeHit").attr("d", dd)
     .on("click", function (ev) { ev.stopPropagation(); openCard("trade", t); })
     .on("mousemove", function (ev) { tip(ev, t.name, (t.dir === "import" ? "\u2190 " : t.dir === "export" ? "\u2192 " : "\u2194 ") + t.partner); })
@@ -255,7 +241,7 @@ tradeEls.each(function (t) {
 });
 var treatyEls = gTreaty.selectAll("g").data(D.treaties).enter().append("g");
 treatyEls.each(function (t) {
-  var g = d3.select(this), dd = wpath(greatArc(DCPT, t.pt));
+  var g = d3.select(this), dd = path(greatArc(DCPT, t.pt));
   g.append("path").attr("class", "treatyHit").attr("d", dd)
     .on("click", function (ev) { ev.stopPropagation(); openCard("treaty", t); })
     .on("mousemove", function (ev) { tip(ev, t.name, t.year + " \u00b7 " + t.partner); })
@@ -512,7 +498,7 @@ D.infra.forEach(function (t) {
 });
 // world-frame country labels
 (D.world110.labels || []).forEach(function (l) {
-  var p = worldProj([l[1], l[2]]);
+  var p = projection([l[1], l[2]]);
   if (!p) return;
   var fs = l[3] === 1 ? 12 : l[3] === 2 ? 10 : 8.5;
   var sp = { type: "worldLbl", obj: { name: l[0] }, tier: l[3], prio: 34 + l[3] * 5, fs: fs, tracked: true };
@@ -521,7 +507,7 @@ D.infra.forEach(function (t) {
   g.append("text").attr("class", "lbl worldLbl").style("font-size", fs + "px").text(String(l[0]).toUpperCase());
 });
 (function () {
-  var p = worldProj([-98, 38.5]);
+  var p = projection([-98, 38.5]);
   var sp = { type: "worldLbl", obj: { name: "United States" }, tier: 1, prio: 30, fs: 13, tracked: true };
   var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
   sp.node = g; sp.px = p[0]; sp.py = p[1]; markers.push(sp);
@@ -529,7 +515,7 @@ D.infra.forEach(function (t) {
 })();
 // trade & treaty labels
 D.trade.forEach(function (t, ti) {
-  var p = worldProj(d3.geoInterpolate(t.us, t.world)(0.34 + (ti % 5) * 0.09));
+  var p = projection(d3.geoInterpolate(t.us, t.world)(0.34 + (ti % 5) * 0.09));
   if (!p) return;
   var sp = { type: "tradeLbl", obj: t, tier: 2, prio: 18, fs: 9.5, tracked: false };
   var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
@@ -540,7 +526,7 @@ D.trade.forEach(function (t, ti) {
     .on("click", function (ev) { ev.stopPropagation(); openCard("trade", t); });
 });
 D.treaties.forEach(function (t) {
-  var p = worldProj(t.pt);
+  var p = projection(t.pt);
   if (!p) return;
   var sp = { type: "treatyLbl", obj: t, tier: 3, prio: 22, fs: 9, tracked: false };
   var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
@@ -551,7 +537,7 @@ D.treaties.forEach(function (t) {
 });
 
 // ------------------------------------------------------------------- zoom --
-var zoomBehavior = d3.zoom().scaleExtent([0.22, 60])
+var zoomBehavior = d3.zoom().scaleExtent([0.12, 60])
   .on("start", function (ev) { if (ev.sourceEvent) { userCamOn(); svg.classed("dragging", true); } })
   .on("zoom", function (ev) {
     gWorld.attr("transform", ev.transform);
@@ -627,6 +613,7 @@ function markerActive(m, iy) {
   if (m.type === "acqLbl") {
     var t = m.obj;
     if (!L.poliLabels) return false;
+    if (m.tier === 3 && k < 0.45) return false;
     var iy2 = Math.floor(year);
     return iy2 >= (t.labelFrom || t.from) && iy2 <= (t.labelTo || YR1);
   }
@@ -638,7 +625,7 @@ function markerActive(m, iy) {
   if (m.type === "regionLbl") {
     var r = m.obj;
     var on = r.kind === "eco" ? L.eco : L.poliLabels;
-    return on && iy >= r.from && iy < (r.to || YR1);
+    return on && k >= 0.5 && iy >= r.from && iy < (r.to || YR1);
   }
   if (m.type === "tech") {
     var tt = m.obj;
@@ -655,15 +642,16 @@ function markerActive(m, iy) {
     return m.tier === 1 ? k >= 1.1 : m.tier === 2 ? k >= 2.1 : k >= 3.2;
   }
   if (m.type === "worldLbl") {
-    return m.tier === 1 ? k >= 0.26 : m.tier === 2 ? k >= 0.7 : k >= 1.35;
+    if (m.obj.name === "United States") return iy >= 1776 && k >= 0.12 && k <= 1.0;
+    return m.tier === 1 ? k >= 0.12 : m.tier === 2 ? k >= 0.32 : k >= 0.75;
   }
   if (m.type === "tradeLbl") {
     var td = m.obj;
-    return L.trade && iy >= td.from && iy < (td.to || YR1) + 1 && k >= 0.3;
+    return L.trade && iy >= td.from && iy < (td.to || YR1) + 1 && k >= 0.13;
   }
   if (m.type === "treatyLbl") {
     var tz = m.obj;
-    return L.trade && iy >= tz.from && iy < (tz.to || YR1) + 1 && k >= 0.55;
+    return L.trade && iy >= tz.from && iy < (tz.to || YR1) + 1 && k >= 0.3;
   }
   return false;
 }
@@ -1355,11 +1343,11 @@ window.addEventListener("resize", function () { location.reload(); });
 // ------------------------------------------- world & territory flights --
 var storyQueue = [], storyTimer = null, camFocus = null;
 function worldRectFor(bbox, pad) {
-  var tl = wpt([bbox[0], bbox[3]]), br = wpt([bbox[2], bbox[1]]);
-  var px = (pad || 0.6) * (br[0] - tl[0]), py = (pad || 0.6) * (br[1] - tl[1]);
-  return [tl[0] - px, tl[1] - py, br[0] + px, br[1] + py];
+  var b = path.bounds(rectGeo(bbox));
+  var px = (pad || 0.6) * (b[1][0] - b[0][0]), py = (pad || 0.6) * (b[1][1] - b[0][1]);
+  return [b[0][0] - px, b[0][1] - py, b[1][0] + px, b[1][1] + py];
 }
-var WORLD_RECT = [WF.x0 - 60, WF.y0 - 30, WF.x0 + WF.w + 60, WF.y0 + WF.h + 30];
+var WORLD_RECT = [WORLD_BOUNDS[0] - 40, WORLD_BOUNDS[1] - 20, WORLD_BOUNDS[2] + 40, WORLD_BOUNDS[3] + 20];
 var terrBtnData = [{ id: "__world", btn: "World map", join: 1750 }].concat(D.insets);
 var terrBtnSel = d3.select("#terrBtns").selectAll("button")
   .data(terrBtnData).enter().append("button").attr("class", "tbtn")

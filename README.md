@@ -27,12 +27,12 @@ to that port.
 
 | Layer | Contents |
 |---|---|
-| World frame | A second satellite frame of the whole Earth (US-centered) lives east of the main stage: overseas territories at their true locations with sharp imagery patches, ~125 labeled countries, and the story camera flying out and back. |
+| One world map | A single continuous satellite Earth on a US-centered Equal Earth projection: the US in high resolution (dedicated imagery patches over North America, Alaska and each territory), ~125 labeled countries, everything at its true location. |
 | Trade & treaties | 21 era-bound import/export arcs (tobacco, the Atlantic slave trade, cotton, kerosene, Lend-Lease, the China trade, LNG…) and 22 treaties/alliances drawn to their partners, all clickable with cited cards. |
 | Technology & infrastructure | Tech sites from the cotton gin and Morse's telegraph through Bell Labs, ENIAC, Fairchild and the AI labs; dams, mines, oilfields, ports, factories, nuclear/solar/wind plants and data centers — every marker era-bound, many with end dates. |
 | Metrics | Year-aware readout of GDP, military strength, rail miles, steel, oil, electricity and American compute (punched cards → ENIAC → data centers), from BEA/EIA/AISI/DoD/Census-grade series. |
 | Satellite base | NASA Blue Marble Next Generation (July 2004), reprojected offline into the map's equal-area conic; the U.S. renders at full brightness with Canada and Mexico veiled darker. Geographic mode (default) shows near-pure terrain; Acquisitions and Union modes tint it. |
-| Overseas territories | The Philippines (1898–1946), Panama Canal Zone (1903–79), Puerto Rico & USVI, Guam & N. Marianas, American Samoa and Hawaiʻi sit at their true places on the world frame — the story camera flies to each as it joins and back again; buttons beside the acquisitions legend fly there anytime. |
+| Overseas territories | The Philippines (1898–1946), Panama Canal Zone (1903–79), Puerto Rico & USVI, Guam & N. Marianas, American Samoa and Hawaiʻi sit at their true places on the world map — the story camera flies to each as it joins and back again; buttons beside the acquisitions legend fly there anytime. |
 | Acquisitions | Original 1783 territory, Louisiana Purchase, 1818 Red River basin, West Florida, Adams-Onís Florida, Texas, Oregon, Mexican Cession, Gadsden, Alaska, Hawaiʻi, Puerto Rico + insular territories — hand-traced along their treaty lines (rivers, parallels, meridians) |
 | Foreign claims & context | New France, New Spain/Mexico, Spanish Luisiana, British colonies & Indian Reserve (Proclamation of 1763), the Floridas, Rupert's Land, Russian America, Kingdom & Republic of Hawaiʻi, Republic of Texas, British North America → Canada |
 | States | All 50 + DC appear at admission (colonies render from 1750; Vermont as a republic 1777–91; Massachusetts+Maine, Virginia+WV/KY, NC+TN merge correctly before their splits) |
