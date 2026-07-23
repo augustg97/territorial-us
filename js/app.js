@@ -176,6 +176,7 @@ var gWorld = svg.append("g");
 var gBase = gWorld.append("g");
 var EPOCHS = (D.rasters || []).filter(function (r) { return r.epoch; })
   .map(function (r) { return r.epoch; }).sort(function (a, b) { return a - b; });
+var tileGroups = [];
 function rasterStack(parent) {
   var g = parent.append("g");
   (D.rasters || []).forEach(function (r) {
@@ -183,7 +184,57 @@ function rasterStack(parent) {
       .attr("width", r.w).attr("height", r.h).attr("preserveAspectRatio", "none");
     if (r.epoch) im.attr("class", "epochImg").attr("data-epoch", r.epoch);
   });
+  tileGroups.push(g.append("g"));
   return g;
+}
+// ---- high-resolution zoom tiles (mounted only when needed) ----
+var tileNodes = {};
+function activeEpochPairs(y) {
+  var out = [];
+  EPOCHS.forEach(function (ep) {
+    var o = epochOpacity(ep, y);
+    if (o > 0.02) out.push([ep, o]);
+  });
+  out.sort(function (a, b) { return b[1] - a[1]; });
+  return out.slice(0, 2);
+}
+function updateTiles() {
+  var T = D.tiles;
+  if (!T) return;
+  var k = currentT.k;
+  var need = {};
+  if (k >= 2.1) {
+    var x0 = (0 - currentT.x) / k, y0 = (0 - currentT.y) / k;
+    var x1 = (W - currentT.x) / k, y1 = (H - currentT.y) / k;
+    var pairs = activeEpochPairs(year);
+    for (var c = 0; c < T.cols; c++) {
+      for (var r = 0; r < T.rows; r++) {
+        var tx0 = T.x0 + c * T.tw, ty0 = T.y0 + r * T.th;
+        if (tx0 > x1 || tx0 + T.tw < x0 || ty0 > y1 || ty0 + T.th < y0) continue;
+        for (var pi = 0; pi < pairs.length; pi++) {
+          need[pairs[pi][0] + "_" + c + "_" + r] = pairs[pi][1];
+        }
+      }
+    }
+  }
+  Object.keys(tileNodes).forEach(function (key) {
+    if (!(key in need)) {
+      tileNodes[key].forEach(function (n) { n.remove(); });
+      delete tileNodes[key];
+    }
+  });
+  Object.keys(need).forEach(function (key) {
+    if (!tileNodes[key]) {
+      var p2 = key.split("_"), e = p2[0], c2 = +p2[1], r2 = +p2[2];
+      var href = T.dir + "t" + e + "_" + c2 + "_" + r2 + ".jpg";
+      tileNodes[key] = tileGroups.map(function (g) {
+        return g.append("image").attr("href", href)
+          .attr("x", T.x0 + c2 * T.tw).attr("y", T.y0 + r2 * T.th)
+          .attr("width", T.tw).attr("height", T.th).attr("preserveAspectRatio", "none").node();
+      });
+    }
+    tileNodes[key].forEach(function (n) { n.setAttribute("opacity", need[key].toFixed(3)); });
+  });
 }
 // crossfade the land-cover epochs along the timeline
 function epochOpacity(ep, y) {
@@ -214,15 +265,67 @@ var world110Rest = { type: "FeatureCollection",
   features: D.world110.countries.features.filter(function (f) { return !NA50[f.properties.name]; }) };
 gBase.append("path").attr("class", "wctry").attr("d", path(world110Rest));
 
+// the frontier, sweeping west as a moving gradient (Census frontier line, approx.)
+var FRONTIER_E = [[1750, -77.5], [1775, -80], [1790, -82.5], [1800, -84.5], [1810, -86.5], [1820, -89.5], [1830, -92], [1840, -94.5], [1850, -96.5], [1860, -98], [1870, -100], [1880, -102.5], [1890, -104.5], [1893, -106]];
+var FRONTIER_W = [[1849, -121.8], [1855, -121], [1860, -119.5], [1870, -116.5], [1880, -113], [1890, -109], [1893, -107]];
+var gFrontier = gWorld.append("g").attr("clip-path", "url(#clipNation)");
+var frontGradE = defs.append("linearGradient").attr("id", "frontGrad").attr("gradientUnits", "userSpaceOnUse")
+  .attr("x1", 3900).attr("x2", 5700).attr("y1", 0).attr("y2", 0);
+var FRONT_STOPS = [];
+[["0%", 0], ["1%", 0], ["2%", 0], ["3%", 0], ["4%", 0], ["5%", 0]].forEach(function (s, i) {
+  FRONT_STOPS.push(frontGradE.append("stop").attr("offset", s[0]).attr("stop-color", "#06090f").attr("stop-opacity", 0));
+});
+var frontRect = gFrontier.append("rect").attr("x", 3900).attr("y", 950).attr("width", 1800).attr("height", 800)
+  .attr("fill", "url(#frontGrad)").style("pointer-events", "none");
+var frontBand = gFrontier.append("rect").attr("y", 950).attr("height", 800).attr("width", 26)
+  .attr("fill", "rgba(255,216,138,.12)").style("cursor", "pointer")
+  .on("click", function (ev) { ev.stopPropagation(); openCard("frontier", FRONTIER_CARD); })
+  .on("mousemove", function (ev) { tip(ev, "The frontier line", "the edge of Euro-American settlement \u00b7 click for the story"); })
+  .on("mouseleave", hideTip);
+var FRONTIER_CARD = {
+  name: "The Frontier Line",
+  tag: "Census settlement frontier \u00b7 1750\u20131890",
+  facts: [
+    ["Defined", "The Census line beyond which population fell under 2 per square mile"],
+    ["Motion", "Appalachian crest (1770s) \u2192 Mississippi (1820s) \u2192 the 100th meridian (1870s)"],
+    ["Closed", "1890 \u2014 the Census could no longer draw a continuous line"]
+  ],
+  eras: [{ from: 1750, to: 1896, text: "The moving edge of Euro-American settlement \u2014 and, from the other side, a moving wave of dispossession breaking over Native nations for a century and a half. Two fronts converge after the gold rush: one marching west from the seaboard, one east from the Pacific coast. In 1890 the Census declared it gone; three years later Frederick Jackson Turner built his famous (and famously contested) thesis on its closing." }],
+  sources: ["U.S. Census Bureau, Statistical Atlas (1890)", "F.J. Turner, The Significance of the Frontier in American History (1893)"]
+};
+function frontierX(lon) { return projection([lon, 38])[0]; }
+function updateFrontier(y) {
+  var show = L.context && y < 1896;
+  gFrontier.style("display", show ? null : "none");
+  if (!show) return;
+  var fade = Math.max(0, Math.min(1, (1896 - y) / 6));
+  var D = 0.34 * fade;
+  var eLon = interpSeries(FRONTIER_E, Math.max(y, 1750));
+  var ex = frontierX(eLon);
+  var westActive = y >= 1849;
+  var wx = westActive ? frontierX(interpSeries(FRONTIER_W, y)) : null;
+  var x0 = 3900, x1 = 5700, span = x1 - x0, del = 34;
+  function off(x) { return Math.max(0, Math.min(1, (x - x0) / span)); }
+  var stops = westActive
+    ? [[0, 0], [off(wx - del), 0], [off(wx + del), D], [off(ex - del), D], [off(ex + del), 0], [1, 0]]
+    : [[0, D], [0.001, D], [0.002, D], [off(ex - del), D], [off(ex + del), 0], [1, 0]];
+  FRONT_STOPS.forEach(function (st, i) {
+    st.attr("offset", (stops[i][0] * 100).toFixed(2) + "%").attr("stop-opacity", stops[i][1].toFixed(3));
+  });
+  frontBand.attr("x", ex - 13).attr("fill-opacity", fade);
+}
+
 // procedural urban-growth footprints (clipped to U.S. land)
 (function () {
   var p = defs.append("pattern").attr("id", "urbTex").attr("width", 2.4).attr("height", 2.4)
     .attr("patternUnits", "userSpaceOnUse");
-  p.append("rect").attr("width", 2.4).attr("height", 2.4).attr("fill", "rgba(206,199,184,.38)");
+  p.append("rect").attr("width", 2.4).attr("height", 2.4).attr("fill", "rgba(206,199,184,.24)");
   p.append("path").attr("d", "M0,1.2 H2.4 M1.2,0 V2.4").attr("stroke", "rgba(70,66,58,.4)").attr("stroke-width", 0.28);
 })();
 var gUrban = gWorld.append("g").attr("clip-path", "url(#clipNation)");
 var URB_N = 30;
+function uhash(seed, k) { var v = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }
+var DISTRICT_FILLS = ["#cfc8b8", "#c6bfae", "#d6d0c2", "#beb7a6"];
 D.urban.forEach(function (m) {
   var shape = [], sum = 0;
   for (var i = 0; i < URB_N; i++) {
@@ -237,9 +340,48 @@ D.urban.forEach(function (m) {
   var norm = 1 / Math.sqrt(sum / URB_N);
   m._shape = shape.map(function (f) { return f * norm; });
   m._px = projection(m.c);
+  function shapeAt(th) {
+    var u = (th / (2 * Math.PI)) * URB_N;
+    var i0 = Math.floor(u) % URB_N, i1 = (i0 + 1) % URB_N, fr = u - Math.floor(u);
+    return m._shape[i0] * (1 - fr) + m._shape[i1] * fr;
+  }
   var g = gUrban.append("g").style("display", "none");
   m._ring = g.append("path").attr("class", "urbRing");
   m._core = g.append("path").attr("class", "urbCore");
+  var Afin = m.area[m.area.length - 1][1];
+  var rFin = Math.sqrt(Afin / Math.PI) * 0.4505;
+  // road spokes: drawn full-length once; revealed with growth via pathLength dashes
+  m._spokes = [];
+  var NS = 8;
+  for (var s2 = 0; s2 < NS; s2++) {
+    var th2 = (s2 / NS) * 2 * Math.PI + uhash(m.seed, s2) * 0.5;
+    var rr = rFin * shapeAt(th2) * 1.05;
+    var mx = m._px[0] + rr * 0.55 * Math.cos(th2 + 0.12), my = m._px[1] - rr * 0.55 * Math.sin(th2 + 0.12);
+    var ex2 = m._px[0] + rr * Math.cos(th2), ey2 = m._px[1] - rr * Math.sin(th2);
+    var sp = g.append("path").attr("class", "urbSpoke")
+      .attr("d", "M" + m._px[0].toFixed(1) + "," + m._px[1].toFixed(1) + " Q" + mx.toFixed(1) + "," + my.toFixed(1) + " " + ex2.toFixed(1) + "," + ey2.toFixed(1))
+      .attr("pathLength", 1).attr("vector-effect", "non-scaling-stroke");
+    m._spokes.push(sp);
+  }
+  m._belt = g.append("path").attr("class", "urbBelt").attr("vector-effect", "non-scaling-stroke");
+  // districts: accrete outward as the footprint reaches them
+  m._districts = [];
+  var ND = 84;
+  for (var k2 = 0; k2 < ND; k2++) {
+    var thd = uhash(m.seed, k2 * 3 + 1) * 2 * Math.PI;
+    var ud = Math.sqrt(uhash(m.seed, k2 * 3 + 2));
+    var dist = rFin * shapeAt(thd) * ud * 0.96;
+    var sz = (0.5 + (dist / rFin) * 1.5 + uhash(m.seed, k2 * 3 + 3) * 0.7) * 0.5;
+    var dx = m._px[0] + dist * Math.cos(thd), dy = m._px[1] - dist * Math.sin(thd);
+    var rot = (-thd * 180 / Math.PI + 90 + (uhash(m.seed, k2 * 7) - 0.5) * 24).toFixed(1);
+    var el = g.append("rect").attr("class", "urbDistrict")
+      .attr("x", (-sz * 0.75).toFixed(2)).attr("y", (-sz * 0.5).toFixed(2))
+      .attr("width", (sz * 1.5).toFixed(2)).attr("height", sz.toFixed(2)).attr("rx", (sz * 0.16).toFixed(2))
+      .attr("fill", DISTRICT_FILLS[k2 % 4])
+      .attr("transform", "translate(" + dx.toFixed(2) + "," + dy.toFixed(2) + ") rotate(" + rot + ")")
+      .style("display", "none");
+    m._districts.push({ el: el, birthR: dist * 0.92 });
+  }
   m._g = g;
 });
 var urbLine = d3.line().curve(d3.curveCatmullRomClosed.alpha(0.6));
@@ -262,6 +404,13 @@ function updateUrban(iy) {
     var r = Math.sqrt(A / Math.PI) * 0.4505; // sq mi -> ref-unit radius
     m._ring.attr("d", urbanPathD(m, r));
     m._core.attr("d", urbanPathD(m, r * 0.55));
+    var Afin = m.area[m.area.length - 1][1];
+    var rFin = Math.sqrt(Afin / Math.PI) * 0.4505;
+    var frac = Math.max(0.03, Math.min(1, (r * 1.12) / (rFin * 1.05)));
+    m._spokes.forEach(function (sp) { sp.attr("stroke-dasharray", frac.toFixed(3) + " 1"); });
+    m._belt.style("display", (A >= 200 && iy >= 1958) ? null : "none");
+    if (A >= 200 && iy >= 1958) m._belt.attr("d", urbanPathD(m, r * 0.66));
+    m._districts.forEach(function (d) { d.el.style("display", d.birthR <= r * 1.02 ? null : "none"); });
   });
 }
 
@@ -610,7 +759,7 @@ var zoomBehavior = d3.zoom().scaleExtent([0.12, 60])
     scaleMarkers();
     throttledCull();
   })
-  .on("end", function () { svg.classed("dragging", false); cullLabels(); });
+  .on("end", function () { svg.classed("dragging", false); cullLabels(); updateTiles(); });
 svg.call(zoomBehavior).on("dblclick.zoom", null);
 var currentT = d3.zoomIdentity;
 
@@ -780,6 +929,7 @@ function render() {
   gBase.selectAll(".epochImg").attr("opacity", function () {
     return epochOpacity(+this.getAttribute("data-epoch"), y).toFixed(3);
   });
+  if (iy !== lastIntYear) updateTiles();
 
   // foreign claims
   foreignEls.style("display", function (t) {
@@ -890,7 +1040,8 @@ function render() {
   // event pulses on the map
   rebuildPulses(iy);
 
-  // urban footprints
+  // frontier + urban footprints
+  updateFrontier(y);
   updateUrban(iy);
 
   // industrial metrics + panel layout
@@ -1305,6 +1456,11 @@ function refreshCard(scrollTop) {
     tag = "TREATY & RELATIONS \u00b7 " + tz2.year + " \u00b7 " + tz2.partner.toUpperCase();
     rows = (tz2.facts || []).slice();
     desc = eraTextFor(tz2, year); span = eraSpanFor(tz2, year); cite = srcHtml(tz2.sources);
+  } else if (s.type === "frontier") {
+    var fr = s.obj;
+    name = fr.name; tag = fr.tag;
+    rows = (fr.facts || []).slice();
+    desc = eraTextFor(fr, year); span = ""; cite = srcHtml(fr.sources);
   } else if (s.type === "event") {
     var e = s.obj;
     name = e.label; tag = "EVENT · " + e.year + " · " + e.cat.toUpperCase();

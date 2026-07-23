@@ -277,8 +277,14 @@ button{font-family:inherit;color:inherit;background:none;border:none;cursor:poin
 
 /* urban growth + highways */
 .urbRing{fill:url(#urbTex);stroke:rgba(240,232,214,.28);stroke-width:.5}
-.urbCore{fill:rgba(216,209,196,.55);stroke:rgba(255,246,226,.30);stroke-width:.5}
+.urbCore{fill:rgba(216,209,196,.34);stroke:rgba(255,246,226,.30);stroke-width:.5}
 .route-highway{stroke:#d8d3c4;stroke-width:1.05;stroke-opacity:.5}
 
 /* zoom-stable stroke widths everywhere on the map */
 #stage svg path, #stage svg rect, #stage svg circle { vector-effect: non-scaling-stroke; }
+
+.route-transmission{stroke:#ffd98a;stroke-width:.9;stroke-opacity:.5}
+
+.urbSpoke{fill:none;stroke:#ddd7c8;stroke-opacity:.55;stroke-width:.8;stroke-linecap:round}
+.urbBelt{fill:none;stroke:#ddd7c8;stroke-opacity:.5;stroke-width:1}
+.urbDistrict{opacity:.55;stroke:rgba(60,56,48,.35);stroke-width:.3}

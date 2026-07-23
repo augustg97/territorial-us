@@ -126,5 +126,62 @@ hwy("i55", "Interstate 55", 1959,
   "Chicago ↔ New Orleans — the Illinois Central's shadow",
   "The Great Migration corridor as freeway, tracking the IC and old US 61 down the river valley — blues highway, grain highway, chemical-corridor highway.");
 
+
+// ---------------- the electric grid ----------------
+function grid(id, name, from, line, tag, era, srcs) {
+  R.push({ id: id, name: name, kind: "transmission", from: from, to: null, line: line, tag: tag,
+    facts: [["Energized", "" + from], ["Kind", "High-voltage transmission"]],
+    eras: [{ from: from, to: 2026, text: era }],
+    sources: srcs || ["IEEE History Center", "U.S. Department of Energy"] });
+}
+grid("niagarapower", "Niagara \u2192 Buffalo — first long-distance AC", 1896,
+  [[-79.06, 43.08], [-78.88, 42.89]],
+  "The polyphase AC gamble proven",
+  "November 16, 1896: Tesla and Westinghouse's polyphase alternating current carries Niagara's power twenty miles to Buffalo's streetcars — settling the War of the Currents and proving that electricity generated anywhere can be used somewhere else. The modern grid begins here.");
+grid("bigcreek", "Big Creek \u2192 Los Angeles", 1913,
+  [[-119.25, 37.2], [-118.6, 35.6], [-118.2, 34.03]],
+  "241 miles from the Sierra — a world record",
+  "The 'hardest working water in the world' drops a mile through Sierra penstocks and rides the world's longest, highest-voltage line (150 kV) to Los Angeles — hydropower distance-shrinking that let a desert city grow beyond any local resource.");
+grid("hoovergrid", "Hoover Dam \u2192 Los Angeles", 1936,
+  [[-114.74, 36.02], [-116.4, 35.2], [-118.2, 34.03]],
+  "266 miles at 287 kV — the New Deal's power line",
+  "When the great dam's generators spun up in 1936, their output crossed the Mojave on the highest-voltage line yet built, arriving in a Los Angeles that had bet its bonds on the dam a decade early. Public power, long-distance transmission and metropolitan growth fused in one project.");
+grid("tvagrid", "TVA transmission network", 1936,
+  [[-84.09, 36.22], [-83.92, 35.96], [-85.31, 35.05], [-87.68, 34.75], [-90.05, 35.15]],
+  "Valley-wide public power",
+  "From Norris Dam outward, the TVA web tied dams, towns and (by 1942) the secret uranium halls of Oak Ridge into one system — the New Deal's proof that a grid could remake a poor rural region's economics within a decade.");
+grid("columbiagrid", "Grand Coulee \u2192 Puget & Portland", 1942,
+  [[-118.98, 47.96], [-120.5, 47.4], [-122.32, 47.6]],
+  "The Northwest's wartime backbone",
+  "Coulee's giant generators, tied to Bonneville's federal lines, powered Boeing's plants, Kaiser's shipyards and Hanford's reactors — the grid as war machine, and afterward as the cheap-power foundation of the aluminum Northwest.");
+grid("bpasouth", "Bonneville grid \u2192 Portland & Hanford", 1944,
+  [[-118.98, 47.96], [-119.5, 46.5], [-121.1, 45.65], [-122.68, 45.52]],
+  "Federal power down the Columbia",
+  "The Bonneville Power Administration's trunk lines follow the river past The Dalles and the plutonium works — public power's spine, later the northern terminal of the DC Intertie.");
+grid("superpower", "Pennsylvania\u2013Ohio interconnection", 1927,
+  [[-75.16, 39.96], [-76.88, 40.27], [-79.99, 40.44], [-82.9, 40.7], [-87.63, 41.88]],
+  "The first great power pool (PJM's ancestor)",
+  "Utilities from Philadelphia to Chicago begin tying their systems together in the 1920s 'Superpower' era — sharing reserves, trading current across state lines, and creating the interconnected eastern grid that regulators would spend a century catching up with.");
+grid("southerngrid", "Southern interconnection", 1930,
+  [[-84.39, 33.75], [-86.8, 33.52], [-88.2, 34.8], [-90.05, 35.15]],
+  "The Southeast ties together",
+  "Georgia Power, Alabama Power and their siblings interlink through the 1920s-30s, wheeling hydro and coal power across the Piedmont — the Commonwealth & Southern system whose president, Wendell Willkie, would carry the private-utility case against the TVA all the way to a presidential nomination.");
+grid("ercot", "Texas interconnection (ERCOT)", 1941,
+  [[-96.95, 32.8], [-95.37, 29.76], [-98.5, 29.45], [-97.74, 30.27], [-96.95, 32.8]],
+  "The grid that stayed inside one state",
+  "Texas utilities interconnected for wartime aluminum and stayed deliberately disconnected from the national grids to escape federal jurisdiction — an island grid whose independence became visible to everyone in the 2021 winter collapse, and whose wind-and-solar boom now leads the nation.");
+grid("pacificintertie", "Pacific DC Intertie", 1970,
+  [[-121.1, 45.6], [-119.8, 42.0], [-118.9, 38.5], [-118.4, 34.3]],
+  "Columbia hydropower to Los Angeles at \u00b1500 kV DC",
+  "Kennedy-era statecraft in aluminum and thyristors: 846 miles of direct current moving spring snowmelt south to air-conditioned Los Angeles and California surplus north in winter — still among the longest DC lines on Earth, and the model for the renewable-era interties now proposed everywhere.");
+grid("intermountain", "Intermountain Power Project", 1986,
+  [[-112.6, 39.35], [-114.6, 37.2], [-116.4, 35.5], [-118.2, 34.03]],
+  "Utah coal (now hydrogen-ready gas) by wire to LA",
+  "Los Angeles built a coal plant in Utah and a \u00b1500 kV DC line to fetch its output — exporting the smoke, importing the power. Its 2025 rebuild to hydrogen-capable turbines makes the same wires a bet on the next fuel.");
+grid("sunzia", "SunZia \u2014 renewable transmission", 2024,
+  [[-107.3, 33.9], [-109.2, 33.6], [-111.0, 33.4]],
+  "New Mexico wind to the desert Southwest",
+  "The largest U.S. renewable-energy transmission project: 550 miles moving three gigawatts of New Mexico wind toward Arizona and California markets — the twenty-first century relearning what Niagara taught in 1896: generation goes where the resource is; wires do the rest.");
+
 TUSDATA.routes = TUSDATA.routes.concat(R);
 })();
