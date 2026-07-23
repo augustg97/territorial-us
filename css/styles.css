@@ -236,3 +236,41 @@ button{font-family:inherit;color:inherit;background:none;border:none;cursor:poin
 .insetStatus{font-size:10px;color:var(--dim);letter-spacing:.04em;margin-top:2px}
 .insetStatus b{color:var(--accent);font-weight:600}
 @media (max-width:1080px){#terrPanel{left:16px}#inset{left:16px;max-width:calc(100vw - 60px)}}
+
+/* ---------- industry metrics ---------- */
+#indBlock{margin-top:7px;border-top:1px solid rgba(255,255,255,.10);padding-top:6px}
+#indBlock .statline b{color:#8a97a8}
+
+/* ---------- world frame ---------- */
+.wctry{fill:none;stroke:rgba(200,220,245,.22);stroke-width:.5}
+.wcoastUS{fill:none;stroke:rgba(255,215,122,.5);stroke-width:.8}
+.lbl.worldLbl{font-weight:600;letter-spacing:.18em;fill:#9fb0c4;opacity:.65;text-anchor:middle}
+.lbl.worldUS{fill:#ffd77a;opacity:.8}
+.wterr{cursor:pointer}
+.wterr.us{fill:#d9a441;fill-opacity:.22;stroke:#ffd77a;stroke-opacity:.9;stroke-width:1}
+.wterr.notyet{fill:#8a94a3;fill-opacity:.10;stroke:#aab4c3;stroke-opacity:.5;stroke-width:.7;stroke-dasharray:3 2}
+.wterr.former{fill:#6f9e8a;fill-opacity:.10;stroke:#8fc2a0;stroke-opacity:.6;stroke-width:.8;stroke-dasharray:4 2.6}
+
+/* trade arcs & treaty lines */
+.tradeArc{fill:none;stroke-linecap:round;stroke-width:1.6;opacity:.85;stroke-dasharray:7 5;animation:flow 1.4s linear infinite}
+.tradeArc.import{animation-direction:reverse}
+.tradeArc.forced{stroke:#d46a6a!important}
+@keyframes flow{to{stroke-dashoffset:-12}}
+.tradeHit{fill:none;stroke:transparent;stroke-width:10;cursor:pointer}
+.treatyLine{fill:none;stroke:#d9c26a;stroke-opacity:.5;stroke-width:.9;stroke-dasharray:2 4}
+.treatyHit{fill:none;stroke:transparent;stroke-width:9;cursor:pointer}
+.lbl.tradeLbl{fill:#c9dcae;font-size:9.5px;font-weight:500}
+.lbl.tradeLbl.import{fill:#d8bfa0}
+.lbl.tradeLbl.forced{fill:#e0a0a0}
+.lbl.treatyLbl{fill:#d9c98a;font-size:9px;font-weight:500;font-style:italic}
+
+/* tech & infra markers */
+.tech-mark{fill:#6fc4b8;stroke:#0a0d12;stroke-width:.8;cursor:pointer}
+.infra-mark{stroke:#0a0d12;stroke-width:.8;cursor:pointer}
+.lbl.tech{fill:#93d8cc;font-size:9.5px;font-weight:500}
+.lbl.infra{font-size:9.5px;font-weight:500}
+
+/* pulses */
+.evPulse{fill:none;stroke:#ffd77a;stroke-width:1.6;opacity:.8;animation:ripple 1.7s ease-out infinite;pointer-events:none;transform-box:fill-box;transform-origin:center}
+@keyframes ripple{0%{transform:scale(.25);opacity:.85}80%{transform:scale(1.9);opacity:0}100%{opacity:0}}
+.birth{fill:none;stroke:#ffe9b0;stroke-width:1.4;animation:ripple 1.5s ease-out infinite;pointer-events:none;transform-box:fill-box;transform-origin:center}

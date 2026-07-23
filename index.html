@@ -25,6 +25,7 @@
       <div class="statline"><b>States</b> <span id="statStates">0</span> · <b>Area</b> <span id="statArea">—</span></div>
       <div class="statline"><b>Sovereign / President</b> <span id="statLeader">—</span></div>
       <div class="statline"><b>Seat of government</b> <span id="statCapital">—</span></div>
+      <div id="indBlock"></div>
     </div>
   </div>
 </div>
@@ -47,15 +48,16 @@
   <div class="seg" id="shadeSeg">
     <button data-mode="geo" class="on">Geographic</button>
     <button data-mode="acq">Acquisitions</button>
-    <button data-mode="union">Union</button>
   </div>
   <div class="grp-h">MAP LAYERS</div>
   <label class="tog"><span>Political boundaries</span><input type="checkbox" id="tgBorders" checked><i></i></label>
   <label class="tog"><span>Political labels</span><input type="checkbox" id="tgPoliLabels" checked><i></i></label>
   <label class="tog"><span>Geographic labels</span><input type="checkbox" id="tgGeoLabels" checked><i></i></label>
   <label class="tog"><span>Parks &amp; landmarks</span><input type="checkbox" id="tgParks" checked><i></i></label>
-  <label class="tog"><span>Trails, canals &amp; rails</span><input type="checkbox" id="tgRoutes" checked><i></i></label>
-  <label class="tog"><span>Ecology overlays</span><input type="checkbox" id="tgEco" checked><i></i></label>
+  <label class="tog"><span>Infrastructure &amp; energy</span><input type="checkbox" id="tgRoutes" checked><i></i></label>
+  <label class="tog"><span>Technology</span><input type="checkbox" id="tgTech" checked><i></i></label>
+  <label class="tog"><span>Trade &amp; treaties</span><input type="checkbox" id="tgTrade" checked><i></i></label>
+  <label class="tog"><span>Ecology &amp; extraction</span><input type="checkbox" id="tgEco" checked><i></i></label>
   <label class="tog"><span>Foreign claims &amp; context</span><input type="checkbox" id="tgContext" checked><i></i></label>
   <div class="grp-h">CAMERA</div>
   <label class="tog"><span>Follow the story</span><input type="checkbox" id="tgAutoCam" checked><i></i></label>
@@ -64,20 +66,8 @@
 
 <!-- ======================= territories & insets ======================= -->
 <div class="panel hidden" id="terrPanel">
-  <div class="panel-h" id="terrHead">TERRITORIES &amp; POSSESSIONS</div>
+  <div class="panel-h" id="terrHead">WORLD &amp; TERRITORIES</div>
   <div id="terrBtns"></div>
-</div>
-
-<div class="panel hidden" id="inset">
-  <div id="insetHead">
-    <div>
-      <div class="eyebrow" id="insetEyebrow">TERRITORY</div>
-      <h2 id="insetTitle">—</h2>
-    </div>
-    <div class="ax" id="insetClose">×</div>
-  </div>
-  <div id="insetStage"></div>
-  <div id="insetFoot">Click the territory or a city for its story</div>
 </div>
 
 <!-- ======================= info card ======================= -->
@@ -144,11 +134,21 @@
     <ul>
       <li>Territorial <b>organization</b> (e.g. the many shapes of Missouri or Dakota Territory) is summarized in cards, not drawn year-by-year.</li>
       <li>Colonial-era claims are stylized; the Maine and Oregon boundary disputes resolve at their treaty dates (1842, 1846).</li>
-      <li>Overseas territories — the Philippines (1898–1946), Panama Canal Zone (1903–79), Puerto Rico, Guam, American Samoa, the U.S. Virgin Islands, the Northern Marianas and Hawaiʻi — open as satellite inset views from the buttons beside the acquisitions legend; the story camera visits each as it joins.</li>
+      <li>Overseas territories — the Philippines (1898–1946), Panama Canal Zone (1903–79), Puerto Rico, Guam, American Samoa, the U.S. Virgin Islands, the Northern Marianas and Hawaiʻi — sit at their true locations on the world frame; the story camera flies to each as it joins, and the buttons beside the acquisitions legend fly there anytime.</li>
       <li>The satellite base is NASA's Blue Marble (July 2004 composite): modern imagery standing in for the past. Vegetation is shown slightly richer in early years as an impression of pre-industrial land cover — not a reconstruction. A few modern features (reservoirs, irrigated fields) predate their existence on screen; the Salton Sea is masked before it formed in 1905.</li>
       <li>City populations are city-proper census figures; national population interpolates between censuses.</li>
     </ul>
-    <h3>PRIMARY SOURCES</h3>
+    <h3>THE WORLD FRAME, TRADE &amp; TECHNOLOGY</h3>
+    <p>Scroll far east of the Atlantic (or use the <b>World map</b> button) and the canvas
+    continues onto a second satellite frame of the whole Earth, where overseas territories
+    sit at their true locations, and where the <b>Trade &amp; treaties</b> layer draws the
+    republic's great flows — tobacco, the Atlantic slave trade, cotton, kerosene, Lend-Lease,
+    the China trade — and its treaties and alliances. The <b>Technology</b> and
+    <b>Infrastructure &amp; energy</b> layers place invention and industry on the ground where
+    they happened, from the cotton gin to Bell Labs to the AI data-center boom; the readout
+    tracks GDP, electricity, oil, rail, steel, military strength and American compute across
+    time (approximate series — Census Bureau, BEA, EIA, AISI, DoD, industry estimates).</p>
+<h3>PRIMARY SOURCES</h3>
     <p>National Archives milestone documents (Treaty of Paris 1783, Louisiana Purchase,
     Guadalupe Hidalgo, Alaska purchase check, Hawaiʻi annexation resolution); Avalon
     Project treaty texts (Yale Law School); U.S. Census Bureau decennial censuses and
@@ -171,7 +171,12 @@
 <script src="data/geo/rivers.js"></script>
 <script src="data/geo/lakes.js"></script>
 <script src="data/geo/ph.js"></script>
+<script src="data/geo/world110.js"></script>
 <script src="data/insets.js"></script>
+<script src="data/trade.js"></script>
+<script src="data/treaties.js"></script>
+<script src="data/tech.js"></script>
+<script src="data/infra.js"></script>
 <script src="data/meta.js"></script>
 <script src="data/territories.js"></script>
 <script src="data/eras.js"></script>

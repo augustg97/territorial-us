@@ -104,6 +104,57 @@ TUSDATA.regions = [
   }
 ];
 
+// --- landscape-transformation regions ---
+TUSDATA.regions.push(
+  {
+    id: "cutover", name: "The Great Cutover", kind: "eco", from: 1860, to: 1930,
+    hatch: true, color: "#8a9a6a",
+    ring: [[-95.50, 48.90], [-92.00, 48.30], [-89.00, 47.80], [-86.50, 46.60], [-84.20, 46.40], [-83.30, 45.20], [-85.00, 44.20], [-87.80, 43.60], [-90.50, 43.90], [-93.50, 45.20], [-95.30, 46.80]],
+    label: "THE CUTOVER", labelAt: [-90.4, 46.1], labelSize: 3,
+    tag: "White-pine logging of the Northwoods · 1860–1920s",
+    facts: [
+      ["Taken", "Most of the vast white-pine forests of Michigan, Wisconsin and Minnesota"],
+      ["Fires", "Peshtigo (1871) killed ~1,200–2,400 — the deadliest fire in U.S. history"],
+      ["After", "Stump barrens, failed farms, and eventually second-growth national forests"]
+    ],
+    eras: [
+      { from: 1860, to: 1900, text: "The lumber frontier moves from Maine through the Great Lakes: white pine floated down the rivers to build Chicago, the treeless prairies' farms, and the cities of the interior. Cut-and-run logging levels one of the continent's great forests in two generations; slash fires like Peshtigo (1871, the same night as Chicago's) and Hinckley (1894) kill thousands." },
+      { from: 1900, to: 2026, text: "The pineries exhausted, the industry leaps to the South and the Pacific Northwest, leaving a 'cutover' of stumps and tax-delinquent land. Failed farm schemes give way, by the 1930s, to replanting, national forests and a second-growth landscape — the region's recovery is one of conservation's quiet successes." }
+    ],
+    sources: ["U.S. Forest Service history office", "Wisconsin Historical Society"]
+  },
+  {
+    id: "mtr", name: "Mountaintop-removal coal country", kind: "eco", from: 1970, to: null,
+    hatch: true, color: "#a08060",
+    ring: [[-82.70, 38.40], [-81.20, 38.55], [-80.60, 37.95], [-81.30, 37.20], [-82.60, 37.30], [-83.20, 37.80]],
+    label: null, labelAt: [-81.8, 37.9], labelSize: 3,
+    tag: "Central Appalachia · 1970s–present",
+    facts: [
+      ["Method", "Ridgetops blasted off to reach coal seams; 'overburden' dumped in valleys"],
+      ["Toll", "500+ peaks lowered; ~2,000 miles of streams buried"]
+    ],
+    eras: [
+      { from: 1970, to: 2026, text: "Strip mining stands up on end: draglines take entire ridgelines in West Virginia, Kentucky and Virginia, burying headwater streams under valley fills. It employs far fewer miners than the deep mines it replaced — coal country's jobs and its mountains decline together, while the 1977 surface-mining act's reclamation promise remains contested ground." }
+    ],
+    sources: ["U.S. Environmental Protection Agency", "U.S. Geological Survey"]
+  },
+  {
+    id: "ogallala", name: "Ogallala Aquifer drawdown", kind: "eco", from: 1950, to: null,
+    hatch: true, color: "#7a9ab0",
+    ring: [[-102.60, 41.40], [-99.80, 41.00], [-98.30, 39.50], [-99.00, 37.00], [-100.30, 34.80], [-102.20, 33.40], [-103.60, 34.80], [-103.80, 37.50], [-103.90, 40.50]],
+    label: null, labelAt: [-101.1, 38.6], labelSize: 3,
+    tag: "High Plains irrigation · 1950s–present",
+    facts: [
+      ["Engine", "Center-pivot irrigation from fossil Ice Age water"],
+      ["Depletion", "Parts of the Texas–Kansas plains have lost half their saturated thickness"]
+    ],
+    eras: [
+      { from: 1950, to: 2026, text: "Center-pivot rigs turn the dry High Plains — Dust Bowl country — into circles of corn, wheat and cotton visible from orbit, all drawn from an aquifer recharged mainly in the Ice Age. In its southern reaches the water table drops faster than rain can ever return it; wells deepen, then retire, in the country's slowest-motion resource drawdown." }
+    ],
+    sources: ["U.S. Geological Survey", "Kansas Geological Survey"]
+  }
+);
+
 // Bison range — staged geometry by year (approximate, after W.T. Hornaday's 1889 map).
 TUSDATA.bison = {
   id: "bison", name: "Range of the American Bison", kind: "eco",

@@ -6,7 +6,9 @@ var D = window.TUSDATA;
 // Graceful defaults if any data module is absent
 D.cities = D.cities || []; D.geofeatures = D.geofeatures || []; D.landmarks = D.landmarks || [];
 D.statesProse = D.statesProse || {}; D.routes = D.routes || []; D.regions = D.regions || [];
-D.insets = D.insets || [];
+D.insets = D.insets || []; D.tech = D.tech || []; D.infra = D.infra || [];
+D.trade = D.trade || []; D.treaties = D.treaties || [];
+D.world110 = D.world110 || { countries: {type:"FeatureCollection",features:[]}, land: {type:"FeatureCollection",features:[{type:"Feature",geometry:{type:"Polygon",coordinates:[]}}]}, labels: [] };
 
 var YR0 = 1750, YR1 = 2026;
 
@@ -14,7 +16,7 @@ var YR0 = 1750, YR1 = 2026;
 var year = 1750, playing = false, speed = 4;
 var autoCam = true, userCam = false;
 var shadeMode = "geo";
-var L = { borders: true, poliLabels: true, geoLabels: true, parks: true, routes: true, eco: true, context: true };
+var L = { borders: true, poliLabels: true, geoLabels: true, parks: true, routes: true, eco: true, context: true, tech: true, trade: true };
 var selected = null;          // {type, obj}
 var lastIntYear = -1, hintShown = true;
 
@@ -113,12 +115,15 @@ function rectGeo(b) {
   for (k = 1; k <= 20; k++) pts.push([w, n - (n - s) * k / 20]);
   return { type: "Polygon", coordinates: [fixRing(pts)] };
 }
-function fitTransform(bbox) {
-  var b = path.bounds(rectGeo(bbox));
-  var dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
-  var cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
+function fitRect(x0, y0, x1, y1) {
+  var dx = x1 - x0, dy = y1 - y0;
+  var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
   var kk = 0.93 / Math.max(dx / W, dy / (H - 110));
   return d3.zoomIdentity.translate(W / 2 - kk * cx, (H - 90) / 2 - kk * cy).scale(kk);
+}
+function fitTransform(bbox) {
+  var b = path.bounds(rectGeo(bbox));
+  return fitRect(b[0][0], b[0][1], b[1][0], b[1][1]);
 }
 var camT = CAMS.map(function (c) { return { y: c[0], t: fitTransform(c[1]) }; });
 function cameraFor(y) {
@@ -184,6 +189,80 @@ gBase.append("rect").attr("class", "veil").attr("x", BM.x).attr("y", BM.y)
   .attr("clip-path", "url(#clipLand)");                                 // land dimmed…
 bmImage().attr("clip-path", "url(#clipNation)");                        // …except the U.S.
 
+// --- world frame: the whole Earth, US-centered, far east of the main stage ---
+var WF = { x0: 4200, y0: -160, w: 2880, h: 1440, img: "data/img/world.jpg" };
+var worldProj = d3.geoEquirectangular().rotate([100, 0])
+  .scale(WF.w / (2 * Math.PI)).translate([WF.x0 + WF.w / 2, WF.y0 + WF.h / 2]);
+var wpath = d3.geoPath(worldProj);
+function wpt(p) { return worldProj(p); }
+defs.append("clipPath").attr("id", "clipWorldLand").append("path").attr("d", wpath(D.world110.land));
+defs.append("clipPath").attr("id", "clipWorldNation").append("path").attr("d", wpath(nationF));
+var gWF = gWorld.append("g");
+function wfImage() {
+  return gWF.append("image").attr("href", WF.img).attr("x", WF.x0).attr("y", WF.y0)
+    .attr("width", WF.w).attr("height", WF.h).attr("preserveAspectRatio", "none");
+}
+wfImage();
+gWF.append("rect").attr("x", WF.x0).attr("y", WF.y0).attr("width", WF.w).attr("height", WF.h)
+  .attr("fill", "#060a10").attr("opacity", 0.5);
+wfImage().attr("clip-path", "url(#clipWorldLand)");
+gWF.append("rect").attr("x", WF.x0).attr("y", WF.y0).attr("width", WF.w).attr("height", WF.h)
+  .attr("fill", "#060a10").attr("opacity", 0.32).attr("clip-path", "url(#clipWorldLand)");
+wfImage().attr("clip-path", "url(#clipWorldNation)");
+// hi-res satellite patches at each territory's true location
+D.insets.forEach(function (c) {
+  var tl = wpt([c.bbox[0], c.bbox[3]]), br = wpt([c.bbox[2], c.bbox[1]]);
+  gWF.append("image").attr("href", c.img).attr("x", tl[0]).attr("y", tl[1])
+    .attr("width", br[0] - tl[0]).attr("height", br[1] - tl[1]).attr("preserveAspectRatio", "none");
+});
+gWF.append("path").attr("class", "wctry").attr("d", wpath(D.world110.countries));
+gWF.append("path").attr("class", "wcoastUS").attr("d", wpath(nationF));
+var wTerrEls = [];
+D.insets.forEach(function (c) {
+  c.feats.forEach(function (f) {
+    var geo = f.geoRef ? stateByFips[f.geoRef] : D[f.geoKey];
+    if (!geo) return;
+    var el = gWF.append("path").datum(f).attr("class", "wterr notyet").attr("d", wpath(geo))
+      .on("click", function (ev, ff) {
+        ev.stopPropagation();
+        var t = D.territories.find(function (tt) { return tt.id === ff.cardId; });
+        if (t) openCard("territory", t);
+      })
+      .on("mousemove", function (ev, ff) { tip(ev, ff.name, ""); })
+      .on("mouseleave", hideTip);
+    wTerrEls.push({ f: f, el: el });
+  });
+});
+// trade arcs & treaty lines
+function greatArc(a, b) {
+  var interp = d3.geoInterpolate(a, b), pts = [];
+  for (var i = 0; i <= 48; i++) pts.push(interp(i / 48));
+  return { type: "LineString", coordinates: pts };
+}
+var TRADE_COLORS = { "export": "#a8cc7f", "import": "#d4b08a", "both": "#9fc0d8" };
+var gTreaty = gWF.append("g");
+var gTrade = gWF.append("g");
+var DCPT = [-77.03, 38.9];
+var tradeEls = gTrade.selectAll("g").data(D.trade).enter().append("g");
+tradeEls.each(function (t) {
+  var g = d3.select(this), dd = wpath(greatArc(t.us, t.world));
+  g.append("path").attr("class", "tradeHit").attr("d", dd)
+    .on("click", function (ev) { ev.stopPropagation(); openCard("trade", t); })
+    .on("mousemove", function (ev) { tip(ev, t.name, (t.dir === "import" ? "\u2190 " : t.dir === "export" ? "\u2192 " : "\u2194 ") + t.partner); })
+    .on("mouseleave", hideTip);
+  g.append("path").attr("class", "tradeArc " + t.dir + (t.forced ? " forced" : "")).attr("d", dd)
+    .attr("stroke", TRADE_COLORS[t.dir] || "#9fc0d8");
+});
+var treatyEls = gTreaty.selectAll("g").data(D.treaties).enter().append("g");
+treatyEls.each(function (t) {
+  var g = d3.select(this), dd = wpath(greatArc(DCPT, t.pt));
+  g.append("path").attr("class", "treatyHit").attr("d", dd)
+    .on("click", function (ev) { ev.stopPropagation(); openCard("treaty", t); })
+    .on("mousemove", function (ev) { tip(ev, t.name, t.year + " \u00b7 " + t.partner); })
+    .on("mouseleave", hideTip);
+  g.append("path").attr("class", "treatyLine").attr("d", dd);
+});
+
 var gGrat = gWorld.append("g");
 var gCtx = gWorld.append("g");
 var gNation = gWorld.append("g");
@@ -196,6 +275,7 @@ var gStates = gWorld.append("g");
 var gRoutes = gWorld.append("g");
 var gSel = gWorld.append("g");
 var gMarkers = gWorld.append("g");
+var gPulse = gWorld.append("g");
 
 gGrat.append("path").attr("class", "graticule").attr("d", path(d3.geoGraticule10()));
 
@@ -307,6 +387,7 @@ routeEls.each(function (r) {
 var markers = [];
 function addMarker(spec) {
   var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
+  g.append("circle").attr("class", "birth").attr("r", 9).style("display", "none");
   spec.node = g;
   var p = projection([spec.lon, spec.lat]);
   spec.px = p[0]; spec.py = p[1];
@@ -403,8 +484,74 @@ function addAreaLabel(t, cls) {
 D.territories.forEach(function (t) { addAreaLabel(t, t.kind === "acquisition" ? "acqLbl" : "foreignLbl"); });
 D.regions.forEach(function (r) { addAreaLabel(r, "regionLbl"); });
 
+// technology & infrastructure sites
+var INFRA_COLORS = { oilfield: "#d4a05f", gasfield: "#c9a06a", refinery: "#c98f5f", coalfield: "#a8917a", mine: "#d9c26a",
+  "plant-hydro": "#6db8d4", "plant-nuclear": "#c48fd4", "plant-coal": "#a88f7a", "plant-solar": "#e8d47a", "plant-wind": "#a8d8b8",
+  factory: "#d48f7a", port: "#7aa8d8", highway: "#b8b0a0", spaceport: "#c4a8d8", datacenter: "#8fd48f" };
+D.tech.forEach(function (t) {
+  var g = addMarker({ type: "tech", obj: t, lon: t.lon, lat: t.lat, tier: t.tier, prio: 24 + t.tier * 4, fs: 9.5, tracked: false });
+  g.append("path").attr("class", "tech-mark").attr("d", "M0,-3.6 L3.2,-1.8 L3.2,1.8 L0,3.6 L-3.2,1.8 L-3.2,-1.8 Z");
+  g.append("circle").attr("r", 8).attr("fill", "transparent").style("cursor", "pointer")
+    .on("click", function (ev) { ev.stopPropagation(); openCard("tech", t); })
+    .on("mousemove", function (ev) { tip(ev, t.name, (t.cat || "technology") + " \u00b7 " + t.from); })
+    .on("mouseleave", hideTip);
+  g.append("text").attr("class", "lbl tech").attr("x", 5.5).attr("y", 3.2).text(t.name)
+    .on("click", function (ev) { ev.stopPropagation(); openCard("tech", t); });
+});
+D.infra.forEach(function (t) {
+  var g = addMarker({ type: "infra", obj: t, lon: t.lon, lat: t.lat, tier: t.tier, prio: 25 + t.tier * 4, fs: 9.5, tracked: false });
+  var col = INFRA_COLORS[t.kind] || "#c4b89a";
+  g.append("rect").attr("class", "infra-mark").attr("x", -2.8).attr("y", -2.8).attr("width", 5.6).attr("height", 5.6)
+    .attr("transform", "rotate(45)").attr("fill", col);
+  g.append("circle").attr("r", 8).attr("fill", "transparent").style("cursor", "pointer")
+    .on("click", function (ev) { ev.stopPropagation(); openCard("infra", t); })
+    .on("mousemove", function (ev) { tip(ev, t.name, (t.kind || "infrastructure") + " \u00b7 " + t.from + (t.to ? "\u2013" + t.to : "")); })
+    .on("mouseleave", hideTip);
+  g.append("text").attr("class", "lbl infra").attr("fill", col).attr("x", 5.5).attr("y", 3.2).text(t.name)
+    .on("click", function (ev) { ev.stopPropagation(); openCard("infra", t); });
+});
+// world-frame country labels
+(D.world110.labels || []).forEach(function (l) {
+  var p = worldProj([l[1], l[2]]);
+  if (!p) return;
+  var fs = l[3] === 1 ? 12 : l[3] === 2 ? 10 : 8.5;
+  var sp = { type: "worldLbl", obj: { name: l[0] }, tier: l[3], prio: 34 + l[3] * 5, fs: fs, tracked: true };
+  var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
+  sp.node = g; sp.px = p[0]; sp.py = p[1]; markers.push(sp);
+  g.append("text").attr("class", "lbl worldLbl").style("font-size", fs + "px").text(String(l[0]).toUpperCase());
+});
+(function () {
+  var p = worldProj([-98, 38.5]);
+  var sp = { type: "worldLbl", obj: { name: "United States" }, tier: 1, prio: 30, fs: 13, tracked: true };
+  var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
+  sp.node = g; sp.px = p[0]; sp.py = p[1]; markers.push(sp);
+  g.append("text").attr("class", "lbl worldLbl worldUS").style("font-size", "13px").text("UNITED STATES");
+})();
+// trade & treaty labels
+D.trade.forEach(function (t, ti) {
+  var p = worldProj(d3.geoInterpolate(t.us, t.world)(0.34 + (ti % 5) * 0.09));
+  if (!p) return;
+  var sp = { type: "tradeLbl", obj: t, tier: 2, prio: 18, fs: 9.5, tracked: false };
+  var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
+  sp.node = g; sp.px = p[0]; sp.py = p[1]; markers.push(sp);
+  g.append("text").attr("class", "lbl tradeLbl " + t.dir + (t.forced ? " forced" : "")).attr("text-anchor", "middle")
+    .text((t.dir === "import" ? "\u2190 " : t.dir === "export" ? "\u2192 " : "\u2194 ") + t.name)
+    .style("cursor", "pointer")
+    .on("click", function (ev) { ev.stopPropagation(); openCard("trade", t); });
+});
+D.treaties.forEach(function (t) {
+  var p = worldProj(t.pt);
+  if (!p) return;
+  var sp = { type: "treatyLbl", obj: t, tier: 3, prio: 22, fs: 9, tracked: false };
+  var g = gMarkers.append("g").attr("class", "marker").style("display", "none");
+  sp.node = g; sp.px = p[0]; sp.py = p[1]; markers.push(sp);
+  g.append("text").attr("class", "lbl treatyLbl").attr("x", 5).attr("y", -5).text(t.name + " (" + t.year + ")")
+    .style("cursor", "pointer")
+    .on("click", function (ev) { ev.stopPropagation(); openCard("treaty", t); });
+});
+
 // ------------------------------------------------------------------- zoom --
-var zoomBehavior = d3.zoom().scaleExtent([0.5, 60])
+var zoomBehavior = d3.zoom().scaleExtent([0.22, 60])
   .on("start", function (ev) { if (ev.sourceEvent) { userCamOn(); svg.classed("dragging", true); } })
   .on("zoom", function (ev) {
     gWorld.attr("transform", ev.transform);
@@ -422,9 +569,7 @@ function userCamOn() {
     d3.select("#recenterBtn").classed("hidden", false);
   }
 }
-d3.select("#recenterBtn").on("click", function () {
-  userCam = false; d3.select(this).classed("hidden", true); applyCamera(true);
-});
+d3.select("#recenterBtn").on("click", function () { backToMain(); });
 d3.select("#tgAutoCam").on("change", function () {
   autoCam = this.checked;
   if (autoCam) { userCam = false; d3.select("#recenterBtn").classed("hidden", true); applyCamera(true); }
@@ -432,6 +577,7 @@ d3.select("#tgAutoCam").on("change", function () {
 
 var camApplying = false;
 function applyCamera(animated) {
+  if (camFocus) return;
   if (!autoCam || userCam) return;
   var t = cameraFor(year);
   camApplying = true;
@@ -494,15 +640,52 @@ function markerActive(m, iy) {
     var on = r.kind === "eco" ? L.eco : L.poliLabels;
     return on && iy >= r.from && iy < (r.to || YR1);
   }
+  if (m.type === "tech") {
+    var tt = m.obj;
+    if (!L.tech || iy < tt.from) return false;
+    if (tt.to && iy >= tt.to + 3) return false;
+    if (year < tt.from + 2) return true; // newborn items surface at any zoom
+    return m.tier === 1 ? k >= 1.1 : m.tier === 2 ? k >= 2.1 : k >= 3.2;
+  }
+  if (m.type === "infra") {
+    var ti = m.obj;
+    if (!L.routes || iy < ti.from) return false;
+    if (ti.to && iy >= ti.to + 3) return false;
+    if (year < ti.from + 2) return true; // newborn items surface at any zoom
+    return m.tier === 1 ? k >= 1.1 : m.tier === 2 ? k >= 2.1 : k >= 3.2;
+  }
+  if (m.type === "worldLbl") {
+    return m.tier === 1 ? k >= 0.26 : m.tier === 2 ? k >= 0.7 : k >= 1.35;
+  }
+  if (m.type === "tradeLbl") {
+    var td = m.obj;
+    return L.trade && iy >= td.from && iy < (td.to || YR1) + 1 && k >= 0.3;
+  }
+  if (m.type === "treatyLbl") {
+    var tz = m.obj;
+    return L.trade && iy >= tz.from && iy < (tz.to || YR1) + 1 && k >= 0.55;
+  }
   return false;
+}
+
+function birthYearOf(m) {
+  if (!m.obj) return null;
+  if (m.type === "city" || m.type === "park") return m.obj.appears;
+  if (m.type === "tech" || m.type === "infra") return m.obj.from;
+  return null;
 }
 
 function cullLabels() {
   var iy = Math.floor(year);
   var k = currentT.k;
   var cands = [];
-  markers.forEach(function (m) { m._vis = false; if (markerActive(m, iy)) cands.push(m); });
-  cands.sort(function (a, b) { return a.prio - b.prio; });
+  markers.forEach(function (m) {
+    m._vis = false;
+    var by = birthYearOf(m);
+    m._fresh = by !== null && year >= by && year < by + 2;
+    if (markerActive(m, iy)) cands.push(m);
+  });
+  cands.sort(function (a, b) { return (a.prio - (a._fresh ? 28 : 0)) - (b.prio - (b._fresh ? 28 : 0)); });
   var placed = [];
   cands.forEach(function (m) {
     var sx = currentT.applyX(m.px), sy = currentT.applyY(m.py);
@@ -524,7 +707,10 @@ function cullLabels() {
   var s = 1 / k;
   markers.forEach(function (m) {
     m.node.style("display", m._vis ? null : "none");
-    if (m._vis) m.node.attr("transform", "translate(" + m.px + "," + m.py + ") scale(" + s + ")");
+    if (m._vis) {
+      m.node.attr("transform", "translate(" + m.px + "," + m.py + ") scale(" + s + ")");
+      m.node.select(".birth").style("display", m._fresh ? null : "none");
+    }
   });
 }
 
@@ -561,8 +747,8 @@ function render() {
     return o;
   });
   acqEls.select(".acq")
-    .attr("fill", function (t) { return shadeMode === "union" ? "#8f9a68" : t.color; })
-    .attr("fill-opacity", shadeMode === "geo" ? 0.12 : shadeMode === "union" ? 0.42 : 0.5)
+    .attr("fill", function (t) { return t.color; })
+    .attr("fill-opacity", shadeMode === "geo" ? 0.12 : 0.5)
     .attr("stroke-opacity", shadeMode === "geo" ? 0.55 : 0.3)
     .attr("stroke", function (t) { return shadeMode === "geo" ? d3.color(t.color).brighter(0.8) : "rgba(255,255,255,.14)"; });
   acqEls.select(".provHatch").style("display", function (t) {
@@ -640,6 +826,18 @@ function render() {
   updateEventReadout(y);
   updateTerritoryUI(iy);
 
+  // trade arcs & treaty lines (world frame)
+  tradeEls.style("display", function (t) { return (L.trade && y >= t.from && y < (t.to || YR1) + 1) ? null : "none"; });
+  treatyEls.style("display", function (t) { return (L.trade && y >= t.from && y < (t.to || YR1) + 1) ? null : "none"; });
+  wTerrEls.forEach(function (w) { w.el.attr("class", "wterr " + featStatus(w.f, iy)); });
+
+  // event pulses on the map
+  rebuildPulses(iy);
+
+  // industrial metrics + panel layout
+  updateIndustry(y);
+  positionViewPanel();
+
   // selected card follows the year
   if (selected) refreshCard();
 
@@ -698,6 +896,59 @@ function stateCount(iy) {
     if (m.colony && iy < 1776) {/* colonies not states */}
   });
   return n;
+}
+
+// ------------------------------------------------------------------ pulses --
+var lastPulseYear = -1;
+function rebuildPulses(iy) {
+  if (iy === lastPulseYear) return;
+  lastPulseYear = iy;
+  gPulse.selectAll("*").remove();
+  D.events.forEach(function (e) {
+    if (!e.pt) return;
+    if (iy >= e.year && iy < e.year + 2) {
+      var p = projection(e.pt);
+      if (!p) return;
+      gPulse.append("circle").attr("class", "evPulse").attr("cx", p[0]).attr("cy", p[1]).attr("r", 11);
+    }
+  });
+}
+
+// ------------------------------------------------------- industrial metrics --
+function fmtMoney(v) {
+  if (v >= 1e12) return "$" + (v / 1e12).toFixed(v < 1e13 ? 2 : 1) + "T";
+  if (v >= 1e9) return "$" + (v / 1e9).toFixed(v < 2e10 ? 1 : 0) + "B";
+  return "$" + Math.round(v / 1e6) + "M";
+}
+var IND_ROWS = [
+  { k: "GDP", from: 1790, fmt: function (y) { return fmtMoney(interpSeries(D.gdp, y)) + " (nominal)"; } },
+  { k: "Military", from: 1776, fmt: function (y) { var v = interpSeries(D.military, y); return v >= 1000 ? (v / 1000).toFixed(1) + "M active" : Math.round(v) + ",000 active"; } },
+  { k: "Rail", from: 1830, to: 1917, fmt: function (y) { return Math.round(interpSeries(D.rail, y)).toLocaleString() + " miles"; } },
+  { k: "Steel", from: 1867, to: 1981, fmt: function (y) { var v = interpSeries(D.steel, y); return (v < 1 ? Math.round(v * 1000) + "k" : Math.round(v) + "M") + " tons/yr"; } },
+  { k: "Oil", from: 1870, fmt: function (y) { var v = interpSeries(D.oil, y); return v >= 1000 ? (v / 1000).toFixed(1) + "M bbl/day" : Math.round(v) + "k bbl/day"; } },
+  { k: "Electricity", from: 1902, fmt: function (y) { return Math.round(interpSeries(D.electricity, y)).toLocaleString() + " TWh"; } },
+  { k: "Compute", from: 1890, fmt: function (y) { return lastLE(D.compute, y); } }
+];
+function updateIndustry(y) {
+  var html = "";
+  IND_ROWS.forEach(function (r) {
+    if (y < r.from || (r.to && y >= r.to)) return;
+    html += '<div class="statline"><b>' + r.k + "</b> <span>" + r.fmt(y) + "</span></div>";
+  });
+  var el = document.getElementById("indBlock");
+  el.innerHTML = html;
+  el.style.display = html ? "" : "none";
+}
+var lastPanelTop = 0;
+function positionViewPanel() {
+  var rb = document.getElementById("readout").getBoundingClientRect().bottom;
+  if (rb > 60) {
+    var t = Math.round(rb + 10);
+    if (Math.abs(t - lastPanelTop) > 2) {
+      lastPanelTop = t;
+      document.getElementById("viewPanel").style.top = t + "px";
+    }
+  }
 }
 
 // ------------------------------------------------------------------ chapters --
@@ -973,6 +1224,27 @@ function refreshCard(scrollTop) {
     name = bz.name; tag = "ECOLOGY · 1750–PRESENT";
     rows = (bz.facts || []).slice();
     desc = eraTextFor(bz, year); span = eraSpanFor(bz, year); cite = srcHtml(bz.sources);
+  } else if (s.type === "tech" || s.type === "infra") {
+    var tt2 = s.obj;
+    name = tt2.name;
+    tag = (s.type === "tech" ? "TECHNOLOGY \u00b7 " + (tt2.cat || "") : "INFRASTRUCTURE \u00b7 " + (tt2.kind || "")).toUpperCase() +
+      " \u00b7 " + tt2.from + (tt2.to ? "\u2013" + tt2.to : "");
+    rows = (tt2.facts || []).slice();
+    desc = iy < tt2.from ? "Not yet — arrives in " + tt2.from + "." : eraTextFor(tt2, year);
+    span = eraSpanFor(tt2, year); cite = srcHtml(tt2.sources);
+  } else if (s.type === "trade") {
+    var tr2 = s.obj;
+    name = tr2.name;
+    tag = "TRADE \u00b7 " + (tr2.dir === "import" ? "IMPORT FROM " : tr2.dir === "export" ? "EXPORT TO " : "WITH ") + tr2.partner.toUpperCase() +
+      " \u00b7 " + tr2.from + "\u2013" + (tr2.to || "present");
+    rows = (tr2.facts || []).slice();
+    desc = eraTextFor(tr2, year); span = eraSpanFor(tr2, year); cite = srcHtml(tr2.sources);
+  } else if (s.type === "treaty") {
+    var tz2 = s.obj;
+    name = tz2.name;
+    tag = "TREATY & RELATIONS \u00b7 " + tz2.year + " \u00b7 " + tz2.partner.toUpperCase();
+    rows = (tz2.facts || []).slice();
+    desc = eraTextFor(tz2, year); span = eraSpanFor(tz2, year); cite = srcHtml(tz2.sources);
   } else if (s.type === "event") {
     var e = s.obj;
     name = e.label; tag = "EVENT · " + e.year + " · " + e.cat.toUpperCase();
@@ -1008,7 +1280,7 @@ function drawSelection() {
     gSel.append("path").attr("class", "selGlow").attr("d", path(s.obj.geo));
   } else if (s.type === "route") {
     gSel.append("path").attr("class", "selGlow").attr("d", path({ type: "LineString", coordinates: s.obj.line }));
-  } else if (s.type === "city" || s.type === "landmark" || s.type === "geo") {
+  } else if (s.type === "city" || s.type === "landmark" || s.type === "geo" || s.type === "tech" || s.type === "infra") {
     var p = projection([s.obj.lon, s.obj.lat]);
     gSel.append("circle").attr("class", "selGlow").attr("cx", p[0]).attr("cy", p[1]).attr("r", 9 / currentT.k);
   }
@@ -1036,6 +1308,7 @@ function wire(id, key) {
 }
 wire("#tgBorders", "borders"); wire("#tgPoliLabels", "poliLabels"); wire("#tgGeoLabels", "geoLabels");
 wire("#tgParks", "parks"); wire("#tgRoutes", "routes"); wire("#tgEco", "eco"); wire("#tgContext", "context");
+wire("#tgTech", "tech"); wire("#tgTrade", "trade");
 function applyLayerVisibility() {
   gStates.selectAll(".stateLine").style("display", L.borders ? null : "none");
 }
@@ -1079,117 +1352,66 @@ function writeHash(iy) {
 // resize
 window.addEventListener("resize", function () { location.reload(); });
 
-// ------------------------------------------- territories & inset views --
-var insetOpen = null;
-var storyQueue = [], storyTimer = null;
-var LEAVE_NOTES = { philippines1898: "INDEPENDENT SINCE 1946", canalzone1903: "ZONE DISSOLVED 1979" };
-
+// ------------------------------------------- world & territory flights --
+var storyQueue = [], storyTimer = null, camFocus = null;
+function worldRectFor(bbox, pad) {
+  var tl = wpt([bbox[0], bbox[3]]), br = wpt([bbox[2], bbox[1]]);
+  var px = (pad || 0.6) * (br[0] - tl[0]), py = (pad || 0.6) * (br[1] - tl[1]);
+  return [tl[0] - px, tl[1] - py, br[0] + px, br[1] + py];
+}
+var WORLD_RECT = [WF.x0 - 60, WF.y0 - 30, WF.x0 + WF.w + 60, WF.y0 + WF.h + 30];
+var terrBtnData = [{ id: "__world", btn: "World map", join: 1750 }].concat(D.insets);
 var terrBtnSel = d3.select("#terrBtns").selectAll("button")
-  .data(D.insets).enter().append("button").attr("class", "tbtn")
+  .data(terrBtnData).enter().append("button").attr("class", "tbtn")
   .html(function (c) {
-    var yrs = c.leave ? (c.join + "–" + c.leave) : ("" + c.join);
+    if (c.id === "__world") return "\ud83c\udf10 " + c.btn;
+    var yrs = c.leave ? (c.join + "\u2013" + c.leave) : ("" + c.join);
     return c.btn + '<span class="ty">' + yrs + "</span>";
   })
   .on("click", function (ev, c) {
-    if (insetOpen && insetOpen.id === c.id) closeInset();
-    else showInset(c, false);
+    if (camFocus && camFocus.id === c.id) { backToMain(); return; }
+    if (c.id === "__world") flyTo(WORLD_RECT, "__world");
+    else flyToTerritory(c, false);
   });
 
-function updateTerritoryUI(iy) {
-  var any = false;
-  terrBtnSel.style("display", function (c) {
-    var vis = iy >= c.join;
-    if (vis) any = true;
-    return vis ? null : "none";
-  }).classed("past", function (c) { return c.leave && iy >= c.leave; })
-    .classed("open", function (c) { return !!(insetOpen && insetOpen.id === c.id); });
-  d3.select("#terrPanel").classed("hidden", !any);
-  if (insetOpen) refreshInsetStyles();
+var INSTANT_CAM = false;
+function flyTo(rect, id) {
+  camFocus = { rect: rect, id: id };
+  d3.select("#recenterBtn").classed("hidden", false).text("\u2316 back to the U.S.");
+  var t = fitRect(rect[0], rect[1], rect[2], rect[3]);
+  camApplying = true;
+  if (INSTANT_CAM) { svg.call(zoomBehavior.transform, t); camApplying = false; }
+  else svg.transition().duration(1100).ease(d3.easeCubicInOut).call(zoomBehavior.transform, t)
+    .on("end", function () { camApplying = false; });
+  updateTerritoryUI(Math.floor(year));
 }
-
+function backToMain() {
+  camFocus = null; clearStoryQueue();
+  d3.select("#recenterBtn").classed("hidden", true).text("\u2316 recenter");
+  userCam = false;
+  applyCamera(true);
+  updateTerritoryUI(Math.floor(year));
+}
+function flyToTerritory(cfg, fromStory) {
+  if (!fromStory) clearStoryQueue();
+  flyTo(worldRectFor(cfg.bbox), cfg.id);
+  var t = D.territories.find(function (tt) { return tt.id === cfg.feats[0].cardId; });
+  if (t) openCard("territory", t);
+}
+function updateTerritoryUI(iy) {
+  terrBtnSel.style("display", function (c) { return (c.id === "__world" || iy >= c.join) ? null : "none"; })
+    .classed("past", function (c) { return !!(c.leave && iy >= c.leave); })
+    .classed("open", function (c) { return !!(camFocus && camFocus.id === c.id); });
+  d3.select("#terrPanel").classed("hidden", false);
+}
 function featStatus(f, iy) {
   if (iy < f.join) return "notyet";
   if (f.leave && iy >= f.leave) return "former";
   return "us";
 }
-function statusText(f, iy) {
-  if (iy < f.join) return "NOT YET U.S. · JOINS " + f.join;
-  if (f.leave && iy >= f.leave) return LEAVE_NOTES[f.cardId] || ("U.S. " + f.join + "–" + f.leave);
-  return "U.S. TERRITORY · SINCE " + f.join;
-}
-
-function showInset(cfg, fromStory) {
-  if (!fromStory) clearStoryQueue();
-  insetOpen = cfg;
-  buildInset(cfg);
-  d3.select("#inset").classed("hidden", false);
-  updateTerritoryUI(Math.floor(year));
-}
-function closeInset() {
-  insetOpen = null;
-  d3.select("#inset").classed("hidden", true);
-  clearStoryQueue();
-  updateTerritoryUI(Math.floor(year));
-}
-d3.select("#insetClose").on("click", closeInset);
-
-function buildInset(cfg) {
-  var stage = d3.select("#insetStage");
-  stage.selectAll("*").remove();
-  var maxW = 600, maxH = 430;
-  var w0 = cfg.bbox[0], s0 = cfg.bbox[1], e0 = cfg.bbox[2], n0 = cfg.bbox[3];
-  var k = Math.min(maxW / (e0 - w0), maxH / (n0 - s0));
-  var iw = (e0 - w0) * k, ih = (n0 - s0) * k;
-  function pt(lon, lat) { return [(lon - w0) * k, (n0 - lat) * k]; }
-  var gt = d3.geoTransform({ point: function (x, y) { this.stream.point((x - w0) * k, (n0 - y) * k); } });
-  var ip = d3.geoPath(gt);
-  var s = stage.append("svg").attr("width", iw).attr("height", ih)
-    .attr("viewBox", "0 0 " + iw + " " + ih);
-  s.append("image").attr("href", cfg.img).attr("x", 0).attr("y", 0)
-    .attr("width", iw).attr("height", ih).attr("preserveAspectRatio", "none");
-  if (cfg.contextCountry) {
-    var cf = D.countries.features.find(function (f) { return f.properties.name === cfg.contextCountry; });
-    if (cf) s.append("path").attr("class", "insetCtx").attr("d", ip(cf));
-  }
-  cfg.feats.forEach(function (f) {
-    var geo = f.geoRef ? stateByFips[f.geoRef] : D[f.geoKey];
-    if (!geo) return;
-    f._el = s.append("path").datum(f).attr("class", "insetTerr").attr("d", ip(geo))
-      .on("click", function (ev, ff) {
-        ev.stopPropagation();
-        var t = D.territories.find(function (tt) { return tt.id === ff.cardId; });
-        if (t) openCard("territory", t);
-      })
-      .on("mousemove", function (ev, ff) { tip(ev, ff.name, statusText(ff, Math.floor(year)).toLowerCase()); })
-      .on("mouseleave", hideTip);
-  });
-  (cfg.cities || []).forEach(function (cid) {
-    var c = D.cities.find(function (cc) { return cc.id === cid; });
-    if (!c) return;
-    var p = pt(c.lon, c.lat);
-    var g = s.append("g").attr("transform", "translate(" + p[0] + "," + p[1] + ")").style("cursor", "pointer")
-      .on("click", function (ev) { ev.stopPropagation(); openCard("city", c); })
-      .on("mousemove", function (ev) { tip(ev, c.name, cityTipSub(c)); })
-      .on("mouseleave", hideTip);
-    g.append("circle").attr("r", 3).attr("class", "city-dot");
-    g.append("text").attr("class", "lbl city").attr("x", 6.5).attr("y", 3.5).text(c.name);
-  });
-  d3.select("#insetTitle").text(cfg.title);
-  refreshInsetStyles();
-}
-
-function refreshInsetStyles() {
-  if (!insetOpen) return;
-  var iy = Math.floor(year);
-  insetOpen.feats.forEach(function (f) {
-    if (f._el) f._el.attr("class", "insetTerr " + featStatus(f, iy));
-  });
-  d3.select("#insetEyebrow").text(statusText(insetOpen.feats[0], iy));
-}
-
-// story-camera jumps: during playback, visit each territory as it joins
+// story-camera: fly to each territory on the world frame as it joins, then back
 function checkStoryJumps(prev, now) {
-  if (!autoCam) return;
+  if (!autoCam || userCam) return;
   D.insets.forEach(function (c) {
     if (c.story && c.join > prev && c.join <= now) storyQueue.push(c);
   });
@@ -1198,28 +1420,29 @@ function checkStoryJumps(prev, now) {
 function pumpStory() {
   if (storyTimer || !storyQueue.length) return;
   var c = storyQueue.shift();
-  showInset(c, true);
+  flyToTerritory(c, true);
   storyTimer = setTimeout(function () {
     storyTimer = null;
     if (storyQueue.length) pumpStory();
-    else if (insetOpen) {
-      insetOpen = null;
-      d3.select("#inset").classed("hidden", true);
+    else {
+      camFocus = null;
+      d3.select("#recenterBtn").classed("hidden", true).text("\u2316 recenter");
+      closeCard();
+      applyCamera(true);
       updateTerritoryUI(Math.floor(year));
     }
-  }, 3800);
+  }, 4200);
 }
-function clearStoryQueue() {
-  storyQueue = [];
-  if (storyTimer) { clearTimeout(storyTimer); storyTimer = null; }
-}
+function clearStoryQueue() { storyQueue = []; if (storyTimer) { clearTimeout(storyTimer); storyTimer = null; } }
 
 // expose a small control surface (used for debugging / capture)
 window.TUS = { seek: seek, render: render, cull: cullLabels, cam: applyCamera,
   get year() { return year; }, openCard: openCard, closeCard: closeCard, layers: L, markers: markers,
   get zoomK() { return currentT.k; },
-  showInset: function (id) { var c = D.insets.find(function (x) { return x.id === id; }); if (c) showInset(c, false); },
-  closeInset: closeInset,
+  flyWorld: function () { flyTo(WORLD_RECT, "__world"); },
+  flyTerritory: function (id) { var c = D.insets.find(function (x) { return x.id === id; }); if (c) flyToTerritory(c, false); },
+  back: backToMain,
+  set instant(v) { INSTANT_CAM = !!v; },
   setMode: function (m) { shadeMode = m; d3.selectAll("#shadeSeg button").classed("on", function () { return this.dataset.mode === m; }); render(); } };
 
 // ------------------------------------------------------------------- init --

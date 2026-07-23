@@ -121,6 +121,66 @@ TUSDATA.areaLedger = [
   [1946, -115600, "Philippine independence"]
 ];
 
+// ---- Industrial & technological metrics (approximate; see sources in About) ----
+// Nominal GDP, dollars (BEA from 1929; scholarly estimates before — Historical
+// Statistics of the United States / Measuring Worth).
+TUSDATA.gdp = [
+  [1790, 1.9e8], [1800, 4.8e8], [1810, 7.0e8], [1820, 7.1e8], [1830, 1.0e9],
+  [1840, 1.6e9], [1850, 2.6e9], [1860, 4.4e9], [1870, 7.7e9], [1880, 1.04e10],
+  [1890, 1.38e10], [1900, 2.06e10], [1910, 3.34e10], [1920, 8.84e10], [1929, 1.046e11],
+  [1933, 5.72e10], [1940, 1.029e11], [1945, 2.28e11], [1950, 3.0e11], [1960, 5.43e11],
+  [1970, 1.075e12], [1980, 2.857e12], [1990, 5.963e12], [2000, 1.025e13], [2010, 1.505e13],
+  [2020, 2.106e13], [2025, 2.92e13]
+];
+// Electricity net generation, TWh (EIA; utility-scale history)
+TUSDATA.electricity = [
+  [1902, 6], [1912, 25], [1920, 57], [1930, 115], [1940, 180], [1950, 389],
+  [1960, 844], [1970, 1640], [1980, 2354], [1990, 3088], [2000, 3802],
+  [2010, 4125], [2020, 4009], [2025, 4300]
+];
+// Crude oil production, thousand barrels per day (EIA)
+TUSDATA.oil = [
+  [1870, 14], [1880, 72], [1890, 126], [1900, 174], [1910, 574], [1920, 1210],
+  [1930, 2460], [1940, 3700], [1950, 5410], [1960, 7040], [1970, 9640],
+  [1980, 8600], [1990, 7360], [2000, 5820], [2008, 5000], [2015, 9400],
+  [2019, 12200], [2024, 13200]
+];
+// Railroad miles operated (Historical Statistics; AAR)
+TUSDATA.rail = [
+  [1830, 23], [1840, 2808], [1850, 9021], [1860, 30626], [1870, 52922],
+  [1880, 93262], [1890, 163597], [1900, 193346], [1916, 254251]
+];
+// Raw steel production, million short tons (AISI; Historical Statistics)
+TUSDATA.steel = [
+  [1867, 0.02], [1880, 1.25], [1890, 4.3], [1900, 11.2], [1910, 26.1],
+  [1920, 42.1], [1930, 40.7], [1940, 60.8], [1945, 79.7], [1955, 117],
+  [1969, 141], [1980, 111.8]
+];
+// Active-duty military personnel, thousands (DoD; Historical Statistics)
+TUSDATA.military = [
+  [1776, 27], [1784, 0.7], [1800, 7], [1815, 40], [1846, 44], [1860, 16],
+  [1865, 1062], [1870, 50], [1898, 235], [1916, 179], [1918, 2897], [1920, 343],
+  [1939, 334], [1941, 1801], [1945, 12209], [1948, 1446], [1953, 3555],
+  [1960, 2476], [1968, 3548], [1975, 2128], [1990, 2044], [2000, 1384],
+  [2010, 1431], [2024, 1300]
+];
+// American compute, era by era (Census Bureau; industry estimates — order of magnitude)
+TUSDATA.compute = [
+  [1890, "Punched-card tabulation (1890 Census)"],
+  [1930, "Punched-card offices across business & government"],
+  [1944, "A handful of electromechanical calculators"],
+  [1946, "1 general-purpose electronic computer (ENIAC)"],
+  [1951, "~10 stored-program computers"],
+  [1960, "~5,000 computers installed"],
+  [1970, "~75,000 computers"],
+  [1980, "~1M computers · microprocessor era"],
+  [1990, "~55M PCs in use"],
+  [2000, "~180M PCs · internet build-out"],
+  [2010, "~2,500 large data centers · cloud era"],
+  [2020, "hyperscale cloud · exaFLOPS era"],
+  [2024, "≈5,400 data centers · frontier AI clusters"]
+];
+
 // Heads of state / government relevant to the map, by (decimal) year.
 TUSDATA.leaders = [
   [1750.0, "George II — King of Great Britain"],
