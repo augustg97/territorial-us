@@ -6,7 +6,7 @@ var D = window.TUSDATA;
 // Graceful defaults if any data module is absent
 D.cities = D.cities || []; D.geofeatures = D.geofeatures || []; D.landmarks = D.landmarks || [];
 D.statesProse = D.statesProse || {}; D.routes = D.routes || []; D.regions = D.regions || [];
-D.insets = D.insets || []; D.tech = D.tech || []; D.infra = D.infra || [];
+D.insets = D.insets || []; D.tech = D.tech || []; D.infra = D.infra || []; D.urban = D.urban || [];
 D.trade = D.trade || []; D.treaties = D.treaties || [];
 D.world110 = D.world110 || { countries: {type:"FeatureCollection",features:[]}, land: {type:"FeatureCollection",features:[{type:"Feature",geometry:{type:"Polygon",coordinates:[]}}]}, labels: [] };
 
@@ -174,13 +174,27 @@ var gWorld = svg.append("g");
 
 // --- satellite base: world raster stack; dark veil; land dimmer; U.S. bright ---
 var gBase = gWorld.append("g");
+var EPOCHS = (D.rasters || []).filter(function (r) { return r.epoch; })
+  .map(function (r) { return r.epoch; }).sort(function (a, b) { return a - b; });
 function rasterStack(parent) {
   var g = parent.append("g");
   (D.rasters || []).forEach(function (r) {
-    g.append("image").attr("href", r.href).attr("x", r.x).attr("y", r.y)
+    var im = g.append("image").attr("href", r.href).attr("x", r.x).attr("y", r.y)
       .attr("width", r.w).attr("height", r.h).attr("preserveAspectRatio", "none");
+    if (r.epoch) im.attr("class", "epochImg").attr("data-epoch", r.epoch);
   });
   return g;
+}
+// crossfade the land-cover epochs along the timeline
+function epochOpacity(ep, y) {
+  if (!EPOCHS.length) return 1;
+  var i = EPOCHS.indexOf(ep);
+  var prev = i > 0 ? EPOCHS[i - 1] : -1e9;
+  var next = i < EPOCHS.length - 1 ? EPOCHS[i + 1] : 1e9;
+  if (y <= prev || y >= next) return 0;
+  if (y === ep) return 1;
+  if (y < ep) return i === 0 ? 1 : (y - prev) / (ep - prev);
+  return i === EPOCHS.length - 1 ? 1 : 1 - (y - ep) / (next - ep);
 }
 function veilRect(parent) {
   return parent.append("rect").attr("x", WORLD_BOUNDS[0]).attr("y", WORLD_BOUNDS[1])
@@ -199,6 +213,57 @@ D.countries.features.forEach(function (f) { NA50[f.properties.name] = 1; });
 var world110Rest = { type: "FeatureCollection",
   features: D.world110.countries.features.filter(function (f) { return !NA50[f.properties.name]; }) };
 gBase.append("path").attr("class", "wctry").attr("d", path(world110Rest));
+
+// procedural urban-growth footprints (clipped to U.S. land)
+(function () {
+  var p = defs.append("pattern").attr("id", "urbTex").attr("width", 2.4).attr("height", 2.4)
+    .attr("patternUnits", "userSpaceOnUse");
+  p.append("rect").attr("width", 2.4).attr("height", 2.4).attr("fill", "rgba(206,199,184,.38)");
+  p.append("path").attr("d", "M0,1.2 H2.4 M1.2,0 V2.4").attr("stroke", "rgba(70,66,58,.4)").attr("stroke-width", 0.28);
+})();
+var gUrban = gWorld.append("g").attr("clip-path", "url(#clipNation)");
+var URB_N = 30;
+D.urban.forEach(function (m) {
+  var shape = [], sum = 0;
+  for (var i = 0; i < URB_N; i++) {
+    var th = i / URB_N * 2 * Math.PI, f = 1;
+    (m.lobes || []).forEach(function (lb) {
+      var c = Math.cos(th - lb[0] * Math.PI / 180);
+      if (c > 0) f += lb[1] * c * c * c;
+    });
+    f *= 0.82 + 0.18 * Math.sin(3 * th + m.seed) + 0.12 * Math.sin(7 * th + 2.3 * m.seed);
+    shape.push(f); sum += f * f;
+  }
+  var norm = 1 / Math.sqrt(sum / URB_N);
+  m._shape = shape.map(function (f) { return f * norm; });
+  m._px = projection(m.c);
+  var g = gUrban.append("g").style("display", "none");
+  m._ring = g.append("path").attr("class", "urbRing");
+  m._core = g.append("path").attr("class", "urbCore");
+  m._g = g;
+});
+var urbLine = d3.line().curve(d3.curveCatmullRomClosed.alpha(0.6));
+function urbanPathD(m, rRef) {
+  var pts = [];
+  for (var i = 0; i < URB_N; i++) {
+    var th = i / URB_N * 2 * Math.PI, r = rRef * m._shape[i];
+    pts.push([m._px[0] + r * Math.cos(th), m._px[1] - r * Math.sin(th)]);
+  }
+  return urbLine(pts);
+}
+var lastUrbanYear = -1;
+function updateUrban(iy) {
+  if (iy === lastUrbanYear) return;
+  lastUrbanYear = iy;
+  D.urban.forEach(function (m) {
+    var A = iy < m.start ? 0 : interpSeries(m.area, iy);
+    if (A < 0.05 || !L.routes) { m._g.style("display", "none"); return; }
+    m._g.style("display", null);
+    var r = Math.sqrt(A / Math.PI) * 0.4505; // sq mi -> ref-unit radius
+    m._ring.attr("d", urbanPathD(m, r));
+    m._core.attr("d", urbanPathD(m, r * 0.55));
+  });
+}
 
 // overseas territory geometries at their true places
 var wTerrEls = [];
@@ -321,7 +386,7 @@ var lakeEls = gLakes.selectAll("path").data(D.lakes.features).enter().append("pa
 // The 2004 imagery shows the Salton Sea, which only formed in 1905 — mask it before then.
 var saltonF = D.lakes.features.find(function (f) { return f.properties.name === "Salton Sea"; });
 var saltonCover = saltonF ? gLakes.append("path").attr("d", path(saltonF))
-  .attr("fill", "#b9a67e").attr("fill-opacity", 0.95).attr("stroke", "none").style("pointer-events", "none") : null;
+  .attr("fill", "#b9a67e").attr("fill-opacity", 0.9).attr("stroke", "none").style("filter", "blur(1.5px)").style("pointer-events", "none") : null;
 
 // regions (Indian Territory, Dust Bowl)
 var regionEls = gRegions.selectAll("g").data(D.regions).enter().append("g");
@@ -711,7 +776,10 @@ function render() {
   // subtle era grade on the satellite base: richer vegetation before industrial
   // land conversion (an impression, not a reconstruction — see About)
   var tg = Math.max(0, Math.min(1, (y - 1850) / 110));
-  gBase.attr("filter", "saturate(" + (1.14 - 0.14 * tg).toFixed(3) + ") brightness(" + (0.97 + 0.03 * tg).toFixed(3) + ")");
+  gBase.attr("filter", "saturate(" + (1.07 - 0.07 * tg).toFixed(3) + ") brightness(" + (0.98 + 0.02 * tg).toFixed(3) + ")");
+  gBase.selectAll(".epochImg").attr("opacity", function () {
+    return epochOpacity(+this.getAttribute("data-epoch"), y).toFixed(3);
+  });
 
   // foreign claims
   foreignEls.style("display", function (t) {
@@ -822,6 +890,9 @@ function render() {
   // event pulses on the map
   rebuildPulses(iy);
 
+  // urban footprints
+  updateUrban(iy);
+
   // industrial metrics + panel layout
   updateIndustry(y);
   positionViewPanel();
@@ -897,7 +968,8 @@ function rebuildPulses(iy) {
     if (iy >= e.year && iy < e.year + 2) {
       var p = projection(e.pt);
       if (!p) return;
-      gPulse.append("circle").attr("class", "evPulse").attr("cx", p[0]).attr("cy", p[1]).attr("r", 11);
+      gPulse.append("circle").attr("class", "evPulse").attr("cx", p[0]).attr("cy", p[1]).attr("r", 11)
+        .attr("vector-effect", "non-scaling-stroke");
     }
   });
 }
@@ -1256,6 +1328,7 @@ function openEventCard(e) { openCard("event", e); }
 function drawSelection() {
   gSel.selectAll("*").remove();
   var s = selected; if (!s) return;
+  setTimeout(function () { gSel.selectAll("path, circle").attr("vector-effect", "non-scaling-stroke"); }, 0);
   var iy = Math.floor(year);
   if (s.type === "state") {
     gSel.append("path").attr("class", "selGlow").attr("d", path(stateGeom(s.obj, iy)));
@@ -1289,6 +1362,7 @@ function wire(id, key) {
   d3.select(id).on("change", function () {
     L[key] = this.checked;
     lastIntYear = -1; // force state pass
+    lastUrbanYear = -1;
     render();
     cullLabels();
     applyLayerVisibility();
@@ -1430,8 +1504,13 @@ window.TUS = { seek: seek, render: render, cull: cullLabels, cam: applyCamera,
   flyWorld: function () { flyTo(WORLD_RECT, "__world"); },
   flyTerritory: function (id) { var c = D.insets.find(function (x) { return x.id === id; }); if (c) flyToTerritory(c, false); },
   back: backToMain,
+  zoomBox: function (w, s, e, n, pad) { flyTo(worldRectFor([w, s, e, n], pad === undefined ? 0.1 : pad), "__custom"); },
   set instant(v) { INSTANT_CAM = !!v; },
   setMode: function (m) { shadeMode = m; d3.selectAll("#shadeSeg button").classed("on", function () { return this.dataset.mode === m; }); render(); } };
+
+function applyNSS() {
+  svg.selectAll("path, rect, circle").attr("vector-effect", "non-scaling-stroke");
+}
 
 // ------------------------------------------------------------------- init --
 buildChapters();
@@ -1439,6 +1518,7 @@ buildLegend();
 buildTimeline();
 d3.select("#speedVal").text(speed + " yr/s");
 render();
+applyNSS();
 svg.call(zoomBehavior.transform, cameraFor(year));
 cullLabels();
 

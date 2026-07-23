@@ -274,3 +274,11 @@ button{font-family:inherit;color:inherit;background:none;border:none;cursor:poin
 .evPulse{fill:none;stroke:#ffd77a;stroke-width:1.6;opacity:.8;animation:ripple 1.7s ease-out infinite;pointer-events:none;transform-box:fill-box;transform-origin:center}
 @keyframes ripple{0%{transform:scale(.25);opacity:.85}80%{transform:scale(1.9);opacity:0}100%{opacity:0}}
 .birth{fill:none;stroke:#ffe9b0;stroke-width:1.4;animation:ripple 1.5s ease-out infinite;pointer-events:none;transform-box:fill-box;transform-origin:center}
+
+/* urban growth + highways */
+.urbRing{fill:url(#urbTex);stroke:rgba(240,232,214,.28);stroke-width:.5}
+.urbCore{fill:rgba(216,209,196,.55);stroke:rgba(255,246,226,.30);stroke-width:.5}
+.route-highway{stroke:#d8d3c4;stroke-width:1.05;stroke-opacity:.5}
+
+/* zoom-stable stroke widths everywhere on the map */
+#stage svg path, #stage svg rect, #stage svg circle { vector-effect: non-scaling-stroke; }
